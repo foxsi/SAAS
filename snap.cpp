@@ -126,7 +126,6 @@ int main(int argc, char* argv[])
                 cv::minMaxLoc(localFrame, &tempMin, &tempMax);
                 std::cout << "Image max: " << (int)tempMax << std::endl;
 
-                calcMinMax(localFrame, localMin, localMax);
                 localHeader.imageMinMax[0] = localMin;
                 localHeader.imageMinMax[1] = localMax;
 
