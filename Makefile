@@ -41,6 +41,9 @@ all: $(EXEC_ALL)
 snap: snap.cpp ImperxStream.o compression.o
 	$(CC) $(CFLAGS) $^ -o $@ $(OPENCV) $(CCFITS) $(IMPERX)
 
+stream: stream.cpp
+	$(CC) $(CFLAGS) $^ -o $@ $(IMPERX)
+
 #This pattern matching will catch all "simple" object dependencies
 %.o: %.cpp %.hpp
 	$(CC) -c $(CFLAGS) $< -o $@
