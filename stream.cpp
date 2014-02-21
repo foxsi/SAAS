@@ -146,7 +146,7 @@ bool AcquireImages()
 
     // Acquire images until the user instructs us to stop
     printf( "\n<press a key to stop streaming>\n" );
-    while ( !PvKbHit() )
+    while ( 1 )
     {
         // Retrieve next buffer		
         PvBuffer *lBuffer = NULL;
@@ -199,7 +199,7 @@ bool AcquireImages()
         ++lDoodleIndex %= 6;
     }
 
-    PvGetChar(); // Flush key buffer for next stop
+//    PvGetChar(); // Flush key buffer for next stop
     printf( "\n\n" );
 
     // Tell the device to stop sending images
@@ -238,7 +238,7 @@ int main()
     AcquireImages();
 
     printf( "\n<press a key to exit>\n" );
-    PvWaitForKeyPress();
+//    PvWaitForKeyPress();
 
     return 0;
 }
