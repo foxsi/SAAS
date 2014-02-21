@@ -21,13 +21,57 @@ PV_INIT_SIGNAL_HANDLER();
 bool AcquireImages()
 {
     // Create a GEV Device finder dialog
-    PvDeviceFinderWnd lDeviceFinderWnd;
+    //PvDeviceFinderWnd lDeviceFinderWnd;
 
     // Prompt the user to select a GEV Device
-    lDeviceFinderWnd.ShowModal();
+    //lDeviceFinderWnd.ShowModal();
 
     // Get the connectivity information for the selected GEV Device
-    PvDeviceInfo* lDeviceInfo = lDeviceFinderWnd.GetSelected();
+    //PvDeviceInfo* lDeviceInfo = lDeviceFinderWnd.GetSelected();
+    PvSystem lSystem;
+    PvDeviceInfo* lDeviceInfo;
+    std::cout << "ImperxStream::Connect starting" << std::endl;
+    PvResult lResult;   
+
+    // Find all GEV Devices on the network.
+    lSystem.SetDetectionTimeout( 2000 );
+    lResult = lSystem.Find();
+    if( !lResult.IsOK() )
+    {
+        printf( "PvSystem::Find Error: %s", lResult.GetCodeString().GetAscii() );
+        return -1;
+    }
+
+    // Get the number of GEV Interfaces that were found using GetInterfaceCount.
+    PvUInt32 lInterfaceCount = lSystem.GetInterfaceCount();
+
+    // Display information about all found interface
+    // For each interface, display information about all devices.
+    for( PvUInt32 x = 0; x < lInterfaceCount; x++ )
+    {
+        // get pointer to each of interface
+        PvInterface * lInterface = lSystem.GetInterface( x );
+
+        printf( "Interface %i\nMAC Address: %s\nIP Address: %s\nSubnet Mask: %s\n\n",
+                x,
+                lInterface->GetMACAddress().GetAscii(),
+                lInterface->GetIPAddress().GetAscii(),
+                lInterface->GetSubnetMask().GetAscii() );
+
+        // Get the number of GEV devices that were found using GetDeviceCount.
+        PvUInt32 lDeviceCount = lInterface->GetDeviceCount();
+
+        for( PvUInt32 y = 0; y < lDeviceCount ; y++ )
+        {
+            lDeviceInfo = lInterface->GetDeviceInfo( y );
+            printf( "Device %i\nMAC Address: %s\nIP Address: %s\nSerial number: %s\n\n",
+                    y,
+                    lDeviceInfo->GetMACAddress().GetAscii(),
+                    lDeviceInfo->GetIPAddress().GetAscii(),
+                    lDeviceInfo->GetSerialNumber().GetAscii() );
+        }
+    }
+
 
     // If no device is selected, abort
     if( lDeviceInfo == NULL )
