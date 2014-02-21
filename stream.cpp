@@ -14,7 +14,7 @@
 #include <PvInterface.h>
 #include <PvDevice.h>
 
-PV_INIT_SIGNAL_HANDLER();
+//PV_INIT_SIGNAL_HANDLER();
 
 //
 // Shows how to use a PvPipeline object to acquire images from a device
