@@ -5,12 +5,14 @@
 // *****************************************************************************
 
 #include <PvSampleUtils.h>
-#include <PvDeviceFinderWnd.h>
 #include <PvDevice.h>
 #include <PvPipeline.h>
 #include <PvBuffer.h>
 #include <PvStream.h>
 #include <PvStreamRaw.h>
+#include <PvSystem.h>
+#include <PvInterface.h>
+#include <PvDevice.h>
 
 PV_INIT_SIGNAL_HANDLER();
 
