@@ -27,6 +27,9 @@ IMPERX =-L$(PUREGEV_ROOT)/lib/		\
 OPENCV = -lopencv_core -lopencv_highgui -lopencv_imgproc
 THREAD = -lpthread
 CCFITS = -lCCfits
+X11 = -lX11
+GL = -lGL
+
 ifeq "$(GCC_VERSION_GE_43)" "1"
     CCFITS += -lrt
 endif
@@ -43,6 +46,9 @@ snap: snap.cpp ImperxStream.o compression.o
 
 stream: stream.cpp
 	$(CC) $(CFLAGS) $^ -o $@ $(IMPERX)
+
+display: display.cpp
+    $(CC) $(CFLAGS) $^ -o $@ $(X11) $(GL)
 
 #This pattern matching will catch all "simple" object dependencies
 %.o: %.cpp %.hpp
