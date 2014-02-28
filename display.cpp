@@ -38,6 +38,7 @@
 #include <X11/keysym.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <GL/glu.h>
 #include <stdint.h>
 
 

@@ -29,6 +29,7 @@ THREAD = -lpthread
 CCFITS = -lCCfits
 X11 = -lX11
 GL = -lGL
+GLU = -lGLU
 
 ifeq "$(GCC_VERSION_GE_43)" "1"
     CCFITS += -lrt
@@ -48,7 +49,7 @@ stream: stream.cpp
 	$(CC) $(CFLAGS) $^ -o $@ $(IMPERX)
 
 display: display.cpp
-	$(CC) $(CFLAGS) $^ -o $@ $(X11) $(GL)
+	$(CC) $(CFLAGS) $^ -o $@ $(X11) $(GL) $(GLU)
 
 #This pattern matching will catch all "simple" object dependencies
 %.o: %.cpp %.hpp
