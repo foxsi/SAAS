@@ -159,7 +159,7 @@ static void init(void)
     height = 256;
 
     // allocate buffer
-    data = malloc( width * height * 3 * sizeof(uint8_t) );
+    data = (uint8_t*) malloc( width * height * 3 * sizeof(uint8_t) );
 
     //for( int i = 0; i < width * height * 3, i++){
     //    data[i] = 5;
