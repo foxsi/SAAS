@@ -296,16 +296,16 @@ event_loop(Display *dpy, Window win)
                int code;
                code = XLookupKeysym(&event.xkey, 0);
                if (code == XK_Left) {
-                  view_roty += 5.0;
+                  
                }
                else if (code == XK_Right) {
-                  view_roty -= 5.0;
+                  
                }
                else if (code == XK_Up) {
-                  view_rotx += 5.0;
+                  
                }
                else if (code == XK_Down) {
-                  view_rotx -= 5.0;
+                  
                }
                else {
                   (void) XLookupString(&event.xkey, buffer, sizeof(buffer),
@@ -319,12 +319,12 @@ event_loop(Display *dpy, Window win)
          }
       }
 
-      /* next frame */
-      angle += 2.0;
+        /* next frame */
+        angle += 2.0;
 
-      // draw();
-      
-      glXSwapBuffers(dpy, win);
+        // draw();
+
+        glXSwapBuffers(dpy, win);
 
       /* calc framerate */
       {
