@@ -129,10 +129,10 @@ static void reshape(int width, int height)
 
 static void init(void)
 {
-    static GLfloat pos[4] = { 5.0, 5.0, 10.0, 0.0 };
-    static GLfloat red[4] = { 0.8, 0.1, 0.0, 1.0 };
-    static GLfloat green[4] = { 0.0, 0.8, 0.2, 1.0 };
-    static GLfloat blue[4] = { 0.2, 0.2, 1.0, 1.0 };
+    //static GLfloat pos[4] = { 5.0, 5.0, 10.0, 0.0 };
+    //static GLfloat red[4] = { 0.8, 0.1, 0.0, 1.0 };
+    //static GLfloat green[4] = { 0.0, 0.8, 0.2, 1.0 };
+    //static GLfloat blue[4] = { 0.2, 0.2, 1.0, 1.0 };
 
     glLightfv(GL_LIGHT0, GL_POSITION, pos);
     glEnable(GL_CULL_FACE);
@@ -153,7 +153,6 @@ static void init(void)
     
     int width, height;
     BYTE * data;
-    FILE * file;
 
     // texture data
     width = 256;
@@ -162,9 +161,9 @@ static void init(void)
     // allocate buffer
     data = malloc( width * height * 3 );
 
-    for( int i = 0; i < width * height * 3, i++){
-        data[i] = 5;
-    }
+    //for( int i = 0; i < width * height * 3, i++){
+    //    data[i] = 5;
+    //}
 
     // build our texture mipmaps
     gluBuild2DMipmaps( GL_TEXTURE_2D, 3, width, height,
