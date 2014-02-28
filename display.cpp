@@ -38,6 +38,7 @@
 #include <X11/keysym.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <stdint.h>
 
 
 #define BENCHMARK
@@ -158,7 +159,7 @@ static void init(void)
     height = 256;
 
     // allocate buffer
-    data = malloc( width * height * 3 );
+    data = malloc( width * height * 3 * sizeof(uint8_t) );
 
     //for( int i = 0; i < width * height * 3, i++){
     //    data[i] = 5;
