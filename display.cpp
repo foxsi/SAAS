@@ -134,7 +134,6 @@ static void init(void)
     //static GLfloat green[4] = { 0.0, 0.8, 0.2, 1.0 };
     //static GLfloat blue[4] = { 0.2, 0.2, 1.0, 1.0 };
 
-    glLightfv(GL_LIGHT0, GL_POSITION, pos);
     glEnable(GL_CULL_FACE);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
@@ -152,7 +151,7 @@ static void init(void)
                  GL_LINEAR_MIPMAP_NEAREST );
     
     int width, height;
-    BYTE * data;
+    uint8_t *data;
 
     // texture data
     width = 256;
