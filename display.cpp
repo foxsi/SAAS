@@ -140,7 +140,7 @@ static void init(void)
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_DEPTH_TEST);
-
+    int i;
     GLuint texture;
     // allocate a texture name
     glGenTextures( 1, &texture );
@@ -162,7 +162,7 @@ static void init(void)
     // allocate buffer
     data = (uint8_t*) malloc( width * height * 3 * sizeof(uint8_t) );
 
-    for( int i = 0; i < width * height * 3, i++){
+    for( i = 0; i < width * height * 3; i++){
         data[i] = rand();
     }
 
