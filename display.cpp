@@ -162,9 +162,9 @@ static void init(void)
     // allocate buffer
     data = (uint8_t*) malloc( width * height * 3 * sizeof(uint8_t) );
 
-    //for( int i = 0; i < width * height * 3, i++){
-    //    data[i] = 5;
-    //}
+    for( int i = 0; i < width * height * 3, i++){
+        data[i] = rand();
+    }
 
     // build our texture mipmaps
     gluBuild2DMipmaps( GL_TEXTURE_2D, 3, width, height,
