@@ -40,7 +40,7 @@
 #include <GL/glx.h>
 #include <GL/glu.h>
 #include <stdint.h>
-
+#include <time.h>
 
 #define BENCHMARK
 
