@@ -158,12 +158,12 @@ static void init(void)
     // texture data
     width = 256;
     height = 256;
-
+    srand(time(NULL));
     // allocate buffer
     data = (uint8_t*) malloc( width * height * 3 * sizeof(uint8_t) );
 
     for( i = 0; i < width * height * 3; i++){
-        data[i] = rand();
+        data[i] = rand() * 10;
     }
 
     // build our texture mipmaps
