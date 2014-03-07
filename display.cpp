@@ -78,41 +78,61 @@ current_time(void)
 #define M_PI 3.14159265
 #endif
 
+GLuint texture[1];      	// Storage for one texture ( NEW )
 
-static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
-static GLint gear1, gear2, gear3;
-static GLfloat angle = 0.0;
+GLfloat xrot;	                // X rotation ( NEW )
+GLfloat yrot;		        // Y rotation ( NEW )
+GLfloat zrot;	        	// Z rotation ( NEW )
+
+unsigned char *data = new unsigned char[256*256*3];
+int width = 256;
+int height = 256;
+
+static void LoadGLTextures()    // Load bitmaps and convert to textures
+{
+    for( int i = 0; i < height * width * 3; i++){
+        data[i] = rand();
+    }    
+
+	// Typical texture generation using data from the bitmap
+	glBindTexture(GL_TEXTURE_2D, texture[0]);
+
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, height, width, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)data);
+
+    //glPixelStorei(GL_UNPACK_ALIGNMENT);    
+
+    // Typical texture generation using data from the bitmap
+    
+    // free the memory
+}
 
 static void draw(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear screen and depth buffer
+    glLoadIdentity();                       // Reset the current modelview matrix
 
-   glPushMatrix();
-   glRotatef(view_rotx, 1.0, 0.0, 0.0);
-   glRotatef(view_roty, 0.0, 1.0, 0.0);
-   glRotatef(view_rotz, 0.0, 0.0, 1.0);
+    glTranslatef(0.0f,0.0f,-9.0f);          // Move into the screen 5 units
 
-   glPushMatrix();
-   glTranslatef(-3.0, -2.0, 0.0);
-   glRotatef(angle, 0.0, 0.0, 1.0);
-   glCallList(gear1);
-   glPopMatrix();
+    //glRotatef(xrot,1.0f,0.0f,0.0f);		// Rotate on the X axis
+	//glRotatef(yrot,0.0f,1.0f,0.0f);		// Rotate on the Y axis
+	//glRotatef(zrot,0.0f,0.0f,1.0f);		// Rotate on the Z axis
 
-   glPushMatrix();
-   glTranslatef(3.1, -2.0, 0.0);
-   glRotatef(-2.0 * angle - 9.0, 0.0, 0.0, 1.0);
-   glCallList(gear2);
-   glPopMatrix();
-
-   glPushMatrix();
-   glTranslatef(-3.1, 4.2, 0.0);
-   glRotatef(-2.0 * angle - 25.0, 0.0, 0.0, 1.0);
-   glCallList(gear3);
-   glPopMatrix();
-
-   glPopMatrix();
+    //glColor3f(0.5f, 0.5f, 0.0f);
+    LoadGLTextures();
+    glBindTexture(GL_TEXTURE_2D, texture[0]);       // Select our texture
+   glBegin(GL_QUADS);
+		// Front face
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom left of the texture and quad
+		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom right of the texture and quad
+		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Top right of the texture and quad
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Top left of the texture and quad
+	glEnd();	
 }
-
 
 /* new window size or exposure */
 static void reshape(int width, int height)
@@ -128,90 +148,26 @@ static void reshape(int width, int height)
    glTranslatef(0.0, 0.0, -40.0);
 }
 
-
 static void init(void)
 {
-    //static GLfloat pos[4] = { 5.0, 5.0, 10.0, 0.0 };
-    //static GLfloat red[4] = { 0.8, 0.1, 0.0, 1.0 };
-    //static GLfloat green[4] = { 0.0, 0.8, 0.2, 1.0 };
-    //static GLfloat blue[4] = { 0.2, 0.2, 1.0, 1.0 };
-
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_DEPTH_TEST);
-    int i;
-    GLuint texture;
-    // allocate a texture name
-    glGenTextures( 1, &texture );
-    
-    // select our current texture
-    glBindTexture( GL_TEXTURE_2D, texture );
-
-    // when texture area is small, bilinear filter the closest mipmap
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                 GL_LINEAR_MIPMAP_NEAREST );
-    
-    int width, height;
-    uint8_t *data;
-
-    // texture data
-    width = 256;
-    height = 256;
     srand(time(NULL));
-    // allocate buffer
-    data = (uint8_t*) malloc( width * height * 3 * sizeof(uint8_t) );
 
-    for( i = 0; i < width * height * 3; i++){
-        data[i] = rand() * 10;
-    }
-
-    // build our texture mipmaps
-    gluBuild2DMipmaps( GL_TEXTURE_2D, 3, width, height,
-                   GL_RGB, GL_UNSIGNED_BYTE, data );
-
-    // free buffer
-    free( data );                   
-    
-    glEnable( GL_TEXTURE_2D );
-    glBindTexture( GL_TEXTURE_2D, texture );
-    glBegin( GL_QUADS );
-    glTexCoord2d(0.0,0.0); glVertex2d(0.0,0.0);
-    glTexCoord2d(1.0,0.0); glVertex2d(1.0,0.0);
-    glTexCoord2d(1.0,1.0); glVertex2d(1.0,1.0);
-    glTexCoord2d(0.0,1.0); glVertex2d(0.0,1.0);
-    glEnd();
-                 
-    /* make the gears
-    gear1 = glGenLists(1);
-    glNewList(gear1, GL_COMPILE);
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-    gear(1.0, 4.0, 1.0, 20, 0.7);
-    glEndList();
-
-    gear2 = glGenLists(1);
-    glNewList(gear2, GL_COMPILE);
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
-    gear(0.5, 2.0, 2.0, 10, 0.7);
-    glEndList();
-
-    gear3 = glGenLists(1);
-    glNewList(gear3, GL_COMPILE);
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
-    gear(1.3, 2.0, 0.5, 10, 0.7);
-    glEndList();
-    */
-
-    glEnable(GL_NORMALIZE);
+    LoadGLTextures();
+    glShadeModel(GL_SMOOTH);                // Enable smooth shading
+	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);   // Black background
+	glClearDepth(1.0f);                     // Depth buffer setup
+	glEnable(GL_DEPTH_TEST);                // Enables depth testing
+	glDepthFunc(GL_LEQUAL);                 // The type of depth testing to do
+	glEnable(GL_TEXTURE_2D);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Really nice perspective calculations
+	glGenTextures(1, &texture[0]);		// Create the texture
 }
-
 
 /*
  * Create an RGB, double-buffered window.
  * Return the window and context handles.
  */
-static void
-make_window( Display *dpy, const char *name,
+static void make_window( Display *dpy, const char *name,
              int x, int y, int width, int height,
              Window *winRet, GLXContext *ctxRet)
 {
@@ -276,8 +232,7 @@ make_window( Display *dpy, const char *name,
 }
 
 
-static void
-event_loop(Display *dpy, Window win)
+static void event_loop(Display *dpy, Window win)
 {
    while (1) {
       while (XPending(dpy) > 0) {
@@ -320,9 +275,9 @@ event_loop(Display *dpy, Window win)
       }
 
         /* next frame */
-        angle += 2.0;
+        //angle += 2.0;
 
-        // draw();
+        draw();
 
         glXSwapBuffers(dpy, win);
 
@@ -376,7 +331,7 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   make_window(dpy, "glxgears", 0, 0, 300, 300, &win, &ctx);
+   make_window(dpy, "FOXSI SAAS", 0, 0, 300, 300, &win, &ctx);
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
    reshape(300, 300);
