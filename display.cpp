@@ -41,6 +41,7 @@
 #include <GL/glu.h>
 #include <stdint.h>
 #include <time.h>
+#include <GLUT/glut.h>
 
 #define BENCHMARK
 
@@ -161,6 +162,7 @@ static void init(void)
 	glEnable(GL_TEXTURE_2D);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Really nice perspective calculations
 	glGenTextures(1, &texture[0]);		// Create the texture
+    
 }
 
 /*
@@ -335,6 +337,8 @@ main(int argc, char *argv[])
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
    reshape(300, 300);
+   glutFullScreen(void)                    // make the window full screen
+
 
    if (printInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
