@@ -28,7 +28,7 @@ THREAD = -lpthread
 X11 = -lX11
 GL = -lGL
 GLU = -lGLU
-GLUT = -lGLUT
+GLUT = -lglut
 
 EXEC_CORE = snap
 EXEC_ALL = $(EXEC_CORE) 
