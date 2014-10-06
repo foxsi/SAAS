@@ -44,7 +44,7 @@ stream: stream.cpp
 	$(CC) $(CFLAGS) $^ -o $@ $(IMPERX)
 
 display: display.cpp
-	$(CC) $(CFLAGS) $^ -o $@ $(X11) $(GL) $(GLU) $(GLUT)
+	$(CC) $(CFLAGS) $^ -o $@ $(GL) $(GLU) $(GLUT)
 
 #This pattern matching will catch all "simple" object dependencies
 %.o: %.cpp %.hpp
