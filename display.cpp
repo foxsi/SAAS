@@ -7,22 +7,23 @@
 #include <time.h>
 #include <sys/time.h>
 
-//angle of rotation
-static char message[1024];
-
-// to compile g++ test2.cpp -lGLU -lm -lGL -lglut
-
 GLuint texture[1];      	// Storage for one texture ( NEW )
 
 // width and height of IMPERX Camera frame
-int width = 1296;
-int height = 966;
-// should only grey scale data here
+static float width = 1296;
+static float height = 966;
+static float arcsec_to_pixel = 3;   // the plate scale
+
+static char message[1024];
+
+// to store the image
 unsigned char *data = new unsigned char[1296*966];
 
-/* return current time (in seconds) */
+
 static int current_time(void)
 {
+    // return current time (in seconds)
+    // used to calculate frame rate
     struct timeval tv;
     struct timezone tz;
     (void) gettimeofday(&tv, &tz);
@@ -30,7 +31,7 @@ static int current_time(void)
 }
 
 void framerate(void){
-    /* calc framerate */
+    // calc framerate
     static int t0 = -1;
     static int frames = 0;
     int t = current_time();
@@ -50,9 +51,9 @@ void framerate(void){
     }
 }
 
-
-static void LoadGLTextures()    // Load bitmaps and convert to textures
+static void LoadGLTextures()
 {
+    // Load bitmaps and convert to textures
     for( int i = 0; i < height * width; i++){
         data[i] = rand();
     }
@@ -74,7 +75,7 @@ static void LoadGLTextures()    // Load bitmaps and convert to textures
     // free the memory
 }
 
-void drawString( int x, int y, char *str ) {
+void draw_string( int x, int y, char *str ) {
     glColor3f( 1.0f, 1.0f, 1.0f );
     glRasterPos2i( x, y );
     
@@ -90,14 +91,14 @@ void drawString( int x, int y, char *str ) {
 
 void draw_circle(float cx, float cy, float r, int num_segments)
 {
-    // from http://slabode.exofire.net/circle_draw.shtml
+    // code courtesy of SiegeLord's Abode
+    // http://slabode.exofire.net/circle_draw.shtml
     float theta = 2 * 3.1415926 / float(num_segments);
-    float tangetial_factor = tanf(theta);//calculate the tangential factor
-    
-    float radial_factor = cosf(theta);//calculate the radial factor
+    float c = cosf(theta);//precalculate the sine and cosine
+    float s = sinf(theta);
+    float t;
     
     float x = r;//we start at angle = 0
-    
     float y = 0;
     
     glBegin(GL_LINE_LOOP);
@@ -105,32 +106,26 @@ void draw_circle(float cx, float cy, float r, int num_segments)
     {
         glVertex2f(x + cx, y + cy);//output vertex
         
-        //calculate the tangential vector
-        //remember, the radial vector is (x, y)
-        //to get the tangential vector we flip those coordinates and negate one of them
-        
-        float tx = -y;
-        float ty = x;
-        
-        //add the tangential vector
-        
-        x += tx * tangetial_factor;
-        y += ty * tangetial_factor;
-        
-        //correct using the radial factor
-        
-        x *= radial_factor;
-        y *= radial_factor;
+        //apply the rotation matrix
+        t = x;
+        x = c * x - s * y;
+        y = s * t + c * y;
     }
     glEnd();
 }
 
 void init (void) {
-    glDisable(GL_DEPTH_TEST);
-    glShadeModel (GL_SMOOTH); //set the shader to smooth shader
     glGenTextures(1, &texture[0]);		// Create the texture
+    
+    glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
-    //glOrtho(0,1,0,1,0,-1);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glShadeModel(GL_SMOOTH);                    // Enable Smooth Shading
+    glClearColor(0.0f, 0.0f, 0.0f, 0.5f);       // Black Background
+    glClearDepth(1.0f);                         // Depth Buffer Setup
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);     // Set Line Antialiasing
+    glEnable(GL_BLEND);
+    glLineWidth(2.0);       // change the thickness of the HUD lines
     LoadGLTextures();
 }
 
@@ -139,16 +134,16 @@ void display (void) {
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the color buffer and the depth buffer
     glLoadIdentity();
     sprintf( message, "(testing! %lf, %lf)",  -12.0, 3.0);
-    drawString(-0.2, -0.9, message);
-    glTranslatef(0.0f,0.0f,-8.0f);          // Move into the screen 5 units
+    //drawString(width/2.0, height/2.0, message);
+    //glTranslatef(0.0f,0.0f,-8.0f);          // Move into the screen 5 units
     
+    glColor3f(1, 1, 1); //color the texture white
     LoadGLTextures();
     glBindTexture(GL_TEXTURE_2D, texture[0]);       // Select our texture
-    float zoom_factor = 1/130.0;
-    float x0 = -width*zoom_factor/2.0;
-    float x1 = width*zoom_factor/2.0;
-    float y0 = -height*zoom_factor/2.0;
-    float y1 = height*zoom_factor/2.0;
+    float x0 = 0.0f;
+    float x1 = width;
+    float y0 = 0.0f;
+    float y1 = height;
     
     glBegin(GL_QUADS);
     // Front face
@@ -164,22 +159,25 @@ void display (void) {
     // cross at center of screen
     // X - line
     glBegin(GL_LINES);
-    glVertex2f(-6, 0);
-    glVertex2f(6, 0);
+    glVertex2f(0.0f, height/2.0f);
+    glVertex2f(width, height/2.0f);
     glEnd();
     
     // Y - line
     glBegin(GL_LINES);
-    glVertex2f(0, -6);
-    glVertex2f(0, 6);
+    glVertex2f(width/2.0f, 0.0f);
+    glVertex2f(width/2.0f, height);
     glEnd();
     
-    // box for Sun
-    draw_circle(0, 0, 2, 30);
-
-    //
-    draw_circle(0, 0, 3, 30);
-    draw_circle(0, 0, 4, 30);
+    // number of segments to use for drawing circles
+    int num_segments = 30;
+    
+    // circle for Sun
+    draw_circle(width/2.0, height/2.0, 30*arcsec_to_pixel, num_segments);
+    
+    // draw larger circles
+    draw_circle(width/2.0, height/2.0, 60*arcsec_to_pixel, num_segments);
+    draw_circle(width/2.0, height/2.0, 90*arcsec_to_pixel, num_segments);
     
     
     glutSwapBuffers(); //swap the buffers
@@ -191,8 +189,10 @@ void reshape (int w, int h) {
     glMatrixMode (GL_PROJECTION); //set the matrix to projection
     
     glLoadIdentity ();
-    gluPerspective (60, (GLfloat)w / (GLfloat)h, 1.0, 100.0); //set the perspective (angle of sight, width, height, , depth)
+    //gluPerspective (60, (GLfloat)w / (GLfloat)h, 1.0, 100.0); //set the perspective (angle of sight, width, height, , depth)
+    glOrtho(0.0f, width, height,0.0f,-1.0f,1.0f);
     glMatrixMode (GL_MODELVIEW); //set the matrix back to model
+    glLoadIdentity();
 }
 
 void keyboard (unsigned char key, int x, int y) {
