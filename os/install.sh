@@ -1,4 +1,4 @@
-#!bin/sh
+#!/bin/sh
 
 if [ $# == 0 ]
 then
@@ -30,7 +30,7 @@ sudo cp etc-resolv.conf /etc/resolv.conf
 sudo cp etc-conf.d-network /etc/conf.d/network
 #sudo cp etc-ntp.conf /etc/ntp.conf
 
-echo "Configuring NIC device names based on known MAC addresses..."
+#echo "Configuring NIC device names based on known MAC addresses..."
 #sudo cp 10-network-sas${sas_id}.rules /etc/udev/rules.d/10-network.rules
 
 echo "Setting up services..."

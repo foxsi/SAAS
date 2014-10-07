@@ -31,7 +31,7 @@ GLU = -lGLU
 GLUT = -lglut
 
 EXEC_CORE = snap
-EXEC_ALL = $(EXEC_CORE) 
+EXEC_ALL = $(EXEC_CORE) display stream
 
 default: $(EXEC_CORE)
 
@@ -44,7 +44,7 @@ stream: stream.cpp
 	$(CC) $(CFLAGS) $^ -o $@ $(IMPERX)
 
 display: display.cpp
-	$(CC) $(CFLAGS) $^ -o $@ $(GL) $(GLU) $(GLUT)
+	$(CC) $(CFLAGS) $^ -o $@ $(GL) $(GLU) $(GLUT) $(THREAD) $(IMPERX)
 
 #This pattern matching will catch all "simple" object dependencies
 %.o: %.cpp %.hpp
