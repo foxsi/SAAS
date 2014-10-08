@@ -36,7 +36,7 @@ static float arcsec_to_pixel = 3;   // the plate scale
 static char message[1024];
 
 // to store the image
-unsigned char *data = new unsigned char[1296*966];  // protected by mutexFrame
+unsigned char *data = new unsigned char[1296*966];
 GLuint texture[1];      	// Storage for one texture to display the camera image
 
 struct CameraSettings
@@ -134,7 +134,7 @@ static void gl_load_gltextures()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, height, width, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (GLvoid*)data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (GLvoid*)data);
     
     //glPixelStorei(GL_UNPACK_ALIGNMENT);
     
@@ -251,8 +251,6 @@ void *CameraThread( void * threadargs)
     
     while(!stop_message[tid])
     {
-
-        
         if (!cameraReady)
         {
             std::cout << "ImperxStream::Connect starting" << std::endl;
@@ -510,7 +508,7 @@ void gl_display (void) {
     glEnd();
     
     // draw HUD
-    glColor3f(1, 0, 0); //HUD color is red
+    glColor3f(1, 1, 1); //HUD color is white
     
     // cross at center of screen
     // X - line
