@@ -1,6 +1,11 @@
-#define MAX_THREADS 5
-#define SLEEP_CAMERA_CONNECT   1 // waits for errors while connecting to camera
-#define SLEEP_KILL             2 // waits when killing all threads
+#define MAX_THREADS            5
+#define SLEEP_CAMERA_CONNECT   1    // waits for errors while connecting to camera
+#define SLEEP_KILL             2    // waits when killing all threads
+#define CALIB_CENTER_X       648    // the calibrated screen center for HUD display
+#define CALIB_CENTER_Y       483    // the calibrated screen center for HUD display
+#define NUM_CIRCLE_SEGMENTS   30    // the number of line segments to use for circles
+#define NUM_XPIXELS         1296    // number of X pixels of sensor
+#define NUM_YPIXELS         966     // number of Y pixels of sensor
 
 #include <GL/gl.h>
 #include <GL/glut.h>
@@ -29,14 +34,14 @@
 
 // global declarations
 // width and height of IMPERX Camera frame
-static float width = 1296;
-static float height = 966;
+static float width = NUM_XPIXELS;
+static float height = NUM_YPIXELS;
 static float arcsec_to_pixel = 3;   // the plate scale
 
 static char message[1024];
 
 // to store the image
-unsigned char *data = new unsigned char[1296*966];
+unsigned char *data = new unsigned char[NUM_XPIXELS * NUM_YPIXELS];
 GLuint texture[1];      	// Storage for one texture to display the camera image
 
 struct CameraSettings
@@ -187,12 +192,12 @@ void gl_init(void) {
     
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glShadeModel(GL_SMOOTH);                    // Enable Smooth Shading
     glClearColor(0.0f, 0.0f, 0.0f, 0.5f);       // Black Background
     glClearDepth(1.0f);                         // Depth Buffer Setup
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);     // Set Line Antialiasing
-    glEnable(GL_BLEND);
+    glDisable(GL_BLEND);
     glLineWidth(2.0);       // change the thickness of the HUD lines
     gl_load_gltextures();
 }
@@ -482,12 +487,11 @@ void start_thread(void *(*routine) (void *), const Thread_data *tdata)
     } else started[i] = true;
     
     pthread_attr_destroy(&attr);
-    
     return;
 }
 
 void gl_display (void) {
-    
+    // the drawing function
     glClearColor (0.0, 0.0, 0.0, 1.0); //clear the screen to black
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the color buffer and the depth buffer
     glLoadIdentity();
@@ -513,25 +517,22 @@ void gl_display (void) {
     // cross at center of screen
     // X - line
     glBegin(GL_LINES);
-    glVertex2f(0.0f, height/2.0f);
-    glVertex2f(width, height/2.0f);
+    glVertex2f(0.0f, CALIB_CENTER_Y);
+    glVertex2f(width, CALIB_CENTER_Y);
     glEnd();
     
     // Y - line
     glBegin(GL_LINES);
-    glVertex2f(width/2.0f, 0.0f);
-    glVertex2f(width/2.0f, height);
+    glVertex2f(CALIB_CENTER_X, 0.0f);
+    glVertex2f(CALIB_CENTER_X, height);
     glEnd();
     
-    // number of segments to use for drawing circles
-    int num_segments = 30;
-    
     // circle for Sun
-    gl_draw_circle(width/2.0, height/2.0, 30*arcsec_to_pixel, num_segments);
+    gl_draw_circle(CALIB_CENTER_X, CALIB_CENTER_Y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     
     // draw larger circles
-    gl_draw_circle(width/2.0, height/2.0, 60*arcsec_to_pixel, num_segments);
-    gl_draw_circle(width/2.0, height/2.0, 90*arcsec_to_pixel, num_segments);
+    gl_draw_circle(CALIB_CENTER_X, CALIB_CENTER_Y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(CALIB_CENTER_X, CALIB_CENTER_Y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     
     glutSwapBuffers(); //swap the buffers
     framerate();
@@ -543,7 +544,7 @@ void gl_reshape (int w, int h) {
     
     glLoadIdentity ();
     //gluPerspective (60, (GLfloat)w / (GLfloat)h, 1.0, 100.0); //set the perspective (angle of sight, width, height, , depth)
-    glOrtho(0.0f, width, height,0.0f,-1.0f,1.0f);
+    glOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
     glMatrixMode (GL_MODELVIEW); //set the matrix back to model
     glLoadIdentity();
 }
@@ -576,11 +577,10 @@ int main (int argc, char **argv) {
     
     glutInit (&argc, argv);
     glutInitDisplayMode (GLUT_DOUBLE | GLUT_DEPTH); //set the display to Double buffer, with depth
-    //glutGameModeString('1024×768:32@75'); //the settings for fullscreen mode
     glutEnterGameMode(); //set glut to fullscreen using the settings in the line above
     gl_init(); // initialize the openGL window
     glutDisplayFunc (gl_display); //use the display function to draw everything
-    glutIdleFunc (gl_display); //update any variables in display, display can be changed to anyhing, as long as you move the variables to be updated, in this case, angle++;
+    glutIdleFunc (gl_display); //update any variables in display
     glutReshapeFunc (gl_reshape); //reshape the window accordingly
     glutKeyboardFunc (keyboard); //check the keyboard
     glutMainLoop (); //call the main loop
