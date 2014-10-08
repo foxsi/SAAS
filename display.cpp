@@ -7,15 +7,22 @@
 #define NUM_XPIXELS         1296    // number of X pixels of sensor
 #define NUM_YPIXELS         966     // number of Y pixels of sensor
 
-#include <GL/gl.h>
-#include <GL/glut.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <pthread.h>    /* for multithreading */
+#include <signal.h>     /* for signal() */
+#include <unistd.h>     /* for sleep()  */
+#include <stdint.h>     /* for uint_16 */
 
+// openGL libraries
+#include <GL/gl.h>
+#include <GL/glut.h>
+
+// imperx camera libraries
 #include <PvSampleUtils.h>
 #include <PvDevice.h>
 #include <PvPipeline.h>
@@ -26,10 +33,6 @@
 #include <PvInterface.h>
 #include <PvDevice.h>
 
-#include <pthread.h>    /* for multithreading */
-#include <signal.h>     /* for signal() */
-#include <unistd.h>     /* for sleep()  */
-#include <stdint.h>     /* for uint_16 */
 //#include <opencv.hpp>
 
 // global declarations
