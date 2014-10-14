@@ -1,8 +1,8 @@
 #define MAX_THREADS            5
 #define SLEEP_CAMERA_CONNECT   1    // waits for errors while connecting to camera
 #define SLEEP_KILL             2    // waits when killing all threads
-#define CALIB_CENTER_X       648    // the calibrated screen center for HUD display
-#define CALIB_CENTER_Y       483    // the calibrated screen center for HUD display
+#define DEFAULT_CALIB_CENTER_X       648    // the default calibrated screen center for HUD display
+#define DEFAULT_CALIB_CENTER_Y       483    // the default calibrated screen center for HUD display
 #define NUM_CIRCLE_SEGMENTS   30    // the number of line segments to use for circles
 #define NUM_XPIXELS         1296    // number of X pixels of sensor
 #define NUM_YPIXELS         966     // number of Y pixels of sensor
@@ -41,7 +41,13 @@ static float width = NUM_XPIXELS;
 static float height = NUM_YPIXELS;
 static float arcsec_to_pixel = 3;   // the plate scale
 
+unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
+unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
+
 static char message[1024];
+
+// file pointer to stored calibrated center
+FILE *file_ptr;
 
 // to store the image
 unsigned char *data = new unsigned char[NUM_XPIXELS * NUM_YPIXELS];
@@ -520,22 +526,22 @@ void gl_display (void) {
     // cross at center of screen
     // X - line
     glBegin(GL_LINES);
-    glVertex2f(0.0f, CALIB_CENTER_Y);
-    glVertex2f(width, CALIB_CENTER_Y);
+    glVertex2f(0.0f, DEFAULT_CALIB_CENTER_Y);
+    glVertex2f(width, DEFAULT_CALIB_CENTER_Y);
     glEnd();
     
     // Y - line
     glBegin(GL_LINES);
-    glVertex2f(CALIB_CENTER_X, 0.0f);
-    glVertex2f(CALIB_CENTER_X, height);
+    glVertex2f(calib_center_x, 0.0f);
+    glVertex2f(calib_center_x, height);
     glEnd();
     
     // circle for Sun
-    gl_draw_circle(CALIB_CENTER_X, CALIB_CENTER_Y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, calib_center_y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     
     // draw larger circles
-    gl_draw_circle(CALIB_CENTER_X, CALIB_CENTER_Y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
-    gl_draw_circle(CALIB_CENTER_X, CALIB_CENTER_Y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, calib_center_y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, calib_center_y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     
     glutSwapBuffers(); //swap the buffers
     framerate();
@@ -577,6 +583,14 @@ int main (int argc, char **argv) {
     
     // start the camera handling thread
     start_thread(CameraThread, NULL);
+    
+    file_ptr = fopen("calibrated_center.txt", "r");
+    if (file_ptr == NULL) {
+        printf("Can't open input file calibrated_center.txt!\n");
+    } else {
+        fscanf(file_ptr, "%u %u", calib_center_x, calib_center_y);
+        fclose(file_ptr);
+    }
     
     glutInit (&argc, argv);
     glutInitDisplayMode (GLUT_DOUBLE | GLUT_DEPTH); //set the display to Double buffer, with depth
