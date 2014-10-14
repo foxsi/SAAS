@@ -201,7 +201,8 @@ void gl_init(void) {
     
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glShadeModel(GL_SMOOTH);                    // Enable Smooth Shading
     glClearColor(0.0f, 0.0f, 0.0f, 0.5f);       // Black Background
     glClearDepth(1.0f);                         // Depth Buffer Setup
@@ -504,7 +505,7 @@ void gl_display (void) {
     glClearColor (0.0, 0.0, 0.0, 1.0); //clear the screen to black
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the color buffer and the depth buffer
     glLoadIdentity();
-    sprintf( message, "(testing! %lf, %lf)",  -12.0, 3.0);
+    //sprintf( message, "(testing! %lf, %lf)",  -12.0, 3.0);
     //drawString(width/2.0, height/2.0, message);
     //glTranslatef(0.0f,0.0f,-8.0f);          // Move into the screen 5 units
     gl_load_gltextures();
@@ -520,6 +521,7 @@ void gl_display (void) {
     glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f,  height, 1.0f);	// Top left of the texture and quad
     glEnd();
     
+    glTranslatef(0.0f, 0.0f, -1.0f);
     // draw HUD
     glColor3f(1, 1, 1); //HUD color is white
     
@@ -552,7 +554,7 @@ void gl_reshape (int w, int h) {
     glMatrixMode (GL_PROJECTION); //set the matrix to projection
     
     glLoadIdentity ();
-    //gluPerspective (60, (GLfloat)w / (GLfloat)h, 1.0, 100.0); //set the perspective (angle of sight, width, height, , depth)
+
     glOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
     glMatrixMode (GL_MODELVIEW); //set the matrix back to model
     glLoadIdentity();
