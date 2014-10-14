@@ -39,7 +39,7 @@
 // width and height of IMPERX Camera frame
 static float width = NUM_XPIXELS;
 static float height = NUM_YPIXELS;
-static float arcsec_to_pixel = 3;   // the plate scale
+static float arcsec_to_pixel = 3.55;   // the plate scale
 
 unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
 unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
