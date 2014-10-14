@@ -584,11 +584,12 @@ int main (int argc, char **argv) {
     // start the camera handling thread
     start_thread(CameraThread, NULL);
     
-    file_ptr = fopen("calibrated_center.txt", "r");
+    file_ptr = fopen("calibrated_ccd_center.txt", "r");
     if (file_ptr == NULL) {
-        printf("Can't open input file calibrated_center.txt!\n");
+        printf("Can't open input file calibrated_ccd_center.txt!\n");
     } else {
         fscanf(file_ptr, "%u %u", calib_center_x, calib_center_y);
+        printf("Found center to be (%u,%u)\n", calib_center_x, calib_center_y);
         fclose(file_ptr);
     }
     
