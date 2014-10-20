@@ -235,10 +235,6 @@ void *CameraThread( void * threadargs)
     //cv::Mat localFrame, mockFrame;
     //HeaderData localHeader;
     //timespec localCaptureTime, preExposure, postExposure, timeElapsed, timeToWait;
-    
-    uint16_t localExposure = settings.exposure;
-    int16_t localPreampGain = settings.preampGain;
-    uint16_t localAnalogGain = settings.analogGain;
 
     char lDoodle[] = "|\\-|-/";
     int lDoodleIndex = 0;
@@ -348,6 +344,37 @@ void *CameraThread( void * threadargs)
                         // IMPORTANT: the pipeline needs to be "armed", or started before
                         // we instruct the device to send us images
                         printf( "Starting pipeline\n" );
+                        
+                        // set camera settings
+                        PvResult outcome;
+                        lDeviceParams->SetBooleanValue("ProgFrameTimeEnable", false);
+                        outcome = lDeviceParams->SetIntegerValue("ExposureTimeRaw", settings.exposure);
+                        outcome = lDeviceParams->SetIntegerValue("GainRaw", settings.analogGain);
+                        
+                        PvString value;
+                        switch(settings.preampGain)
+                        {
+                            case -3: 
+                                value = "minus3dB";
+                                break;
+                            case 0: 
+                                value = "zero_dB";
+                                break;
+                            case 3: 
+                                value = "plus3dB";
+                                break;
+                            case 6:
+                                value = "plus6dB";
+                                break;
+                            default:
+                                value = "zero_dB";
+                        }
+                        
+                        outcome = lDeviceParams->SetEnumValue("PreAmpRaw", value);
+                        if (settings.blackLevel >= 0 && settings.blackLevel <= 1023){
+                            outcome = lDeviceParams->SetIntegerValue("BlackLevelRaw", settings.blackLevel);
+                        }
+        
                         lPipeline->Start();
                         
                         // Get stream parameters/stats
