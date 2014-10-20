@@ -47,6 +47,8 @@ unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
 // file pointer
 FILE *file_ptr = NULL;
 
+char message[100] = "Starting Up";
+
 // to store the image
 unsigned char *data = new unsigned char[NUM_XPIXELS * NUM_YPIXELS];
 GLuint texture[1];      	// Storage for one texture to display the camera image
@@ -90,6 +92,8 @@ void gl_draw_circle(float cx, float cy, float r, int num_segments);
 void gl_init(void);
 void gl_display (void);
 void gl_reshape (int w, int h);
+void gl_switchToOrtho (void);
+
 void keyboard (unsigned char key, int x, int y);
 void *CameraThread( void * threadargs, int camera_id);
 void read_calibrated_ccd_center(void);
@@ -152,7 +156,7 @@ static void gl_load_gltextures()
 }
 
 void gl_draw_string( int x, int y, char *str ) {
-    glColor3f( 1.0f, 1.0f, 1.0f );
+    glColor3f( 1.0f, 1.0f, 1.0f);
     glRasterPos2i( x, y );
     
     for ( int i=0, len=strlen(str); i<len; i++ ) {
@@ -188,22 +192,6 @@ void gl_draw_circle(float cx, float cy, float r, int num_segments)
         y = s * t + c * y;
     }
     glEnd();
-}
-
-void gl_init(void) {
-    glGenTextures(1, &texture[0]);		// Create the texture
-    
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glEnable (GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glShadeModel(GL_SMOOTH);                    // Enable Smooth Shading
-    glClearColor(0.0f, 0.0f, 0.0f, 0.5f);       // Black Background
-    glClearDepth(1.0f);                         // Depth Buffer Setup
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);     // Set Line Antialiasing
-    glDisable(GL_BLEND);
-    glLineWidth(2.0);       // change the thickness of the HUD lines
-    gl_load_gltextures();
 }
 
 void kill_all_threads()
@@ -249,25 +237,26 @@ void *CameraThread( void * threadargs)
     PvStream lStream;
     PvPipeline *lPipeline;
     PvGenParameterArray *lStreamParams;
-    cameraReady = false;
     PvGenParameterArray *lDeviceParams;
+    PvUInt32 lDeviceCount;
     
     while(!stop_message[tid])
     {
         if (!cameraReady)
         {
-            std::cout << "ImperxStream::Connect starting" << std::endl;
+            strcpy( message, "Searching for Camera.");
+            printf("%s\n", message);
             
             // Find all GEV Devices on the network.
             lSystem.SetDetectionTimeout( 2000 );
             lResult = lSystem.Find();
             if( !lResult.IsOK() )
             {
-                printf( "PvSystem::Find Error: %s", lResult.GetCodeString().GetAscii() );
+                sprintf(message, "PvSystem::Find Error: %s", lResult.GetCodeString().GetAscii() );
+                printf("%s\n", message);
                 cameraReady = false;
                 sleep(SLEEP_CAMERA_CONNECT);
             } else {
-                
                 // Get the number of GEV Interfaces that were found using GetInterfaceCount.
                 PvUInt32 lInterfaceCount = lSystem.GetInterfaceCount();
                 
@@ -278,36 +267,39 @@ void *CameraThread( void * threadargs)
                     // get pointer to each of interface
                     PvInterface * lInterface = lSystem.GetInterface( x );
                     
-                    printf( "Interface %i\nMAC Address: %s\nIP Address: %s\nSubnet Mask: %s\n\n",
+                    sprintf(message, "Interface %i\nMAC Address: %s\nIP Address: %s\nSubnet Mask: %s\n\n",
                            x,
                            lInterface->GetMACAddress().GetAscii(),
                            lInterface->GetIPAddress().GetAscii(),
                            lInterface->GetSubnetMask().GetAscii() );
-                    
+                    printf("%s\n", message);
+
                     // Get the number of GEV devices that were found using GetDeviceCount.
-                    PvUInt32 lDeviceCount = lInterface->GetDeviceCount();
+                    lDeviceCount = lInterface->GetDeviceCount();
                     
                     for( PvUInt32 y = 0; y < lDeviceCount ; y++ )
                     {
                         lDeviceInfo = lInterface->GetDeviceInfo( y );
-                        printf( "Device %i\nMAC Address: %s\nIP Address: %s\nSerial number: %s\n\n",
+                        sprintf(message, "Device %i\nMAC Address: %s\nIP Address: %s\nSerial number: %s\n",
                                y,
                                lDeviceInfo->GetMACAddress().GetAscii(),
                                lDeviceInfo->GetIPAddress().GetAscii(),
                                lDeviceInfo->GetSerialNumber().GetAscii() );
+                        printf("%s\n", message);
                     }
                 }
                 
                 // If no device is selected, abort
-                if( lDeviceInfo == NULL )
+                if( lDeviceCount == 0 )
                 {
-                    printf( "No device selected.\n" );
+                    sprintf(message, "No Camera Found.\n" );
+                    printf("%s\n", message);
                     cameraReady = false;
                     sleep(SLEEP_CAMERA_CONNECT);
                 } else {
-                    
                     // Connect to the GEV Device
-                    printf( "Connecting to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
+                    sprintf(message, "Connecting to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
+                    printf("%s\n", message);
                     if ( !lDevice.Connect( lDeviceInfo ).IsOK() )
                     {
                         printf( "Unable to connect to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
@@ -315,7 +307,8 @@ void *CameraThread( void * threadargs)
                         sleep(SLEEP_CAMERA_CONNECT);
                     } else {
                         
-                        printf( "Successfully connected to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
+                        sprintf(message, "Successfully connected to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
+                        printf("%s\n", message);
                         
                         // Get device parameters need to control streaming
                         lDeviceParams = lDevice.GetGenParameters();
@@ -324,7 +317,8 @@ void *CameraThread( void * threadargs)
                         lDevice.NegotiatePacketSize();
                         
                         // Open stream - have the PvDevice do it for us
-                        printf( "Opening stream to device\n" );
+                        sprintf(message, "Opening stream to device\n" );
+                        printf("%s\n", message);
                         lStream.Open( lDeviceInfo->GetIPAddress() );
                         
                         // Create the PvPipeline object
@@ -343,7 +337,8 @@ void *CameraThread( void * threadargs)
                         
                         // IMPORTANT: the pipeline needs to be "armed", or started before
                         // we instruct the device to send us images
-                        printf( "Starting pipeline\n" );
+                        sprintf(message, "Starting pipeline\n" );
+                        printf("%s\n", message);
                         
                         // set camera settings
                         PvResult outcome;
@@ -384,12 +379,14 @@ void *CameraThread( void * threadargs)
                         // before sending the AcquisitionStart command
                         lDeviceParams->SetIntegerValue( "TLParamsLocked", 1 );
                         
-                        printf( "Resetting timestamp counter...\n" );
+                        sprintf(message, "Resetting timestamp counter...\n" );
+                        printf("%s\n", message);
                         lDeviceParams->ExecuteCommand( "GevTimestampControlReset" );
                         
                         // The pipeline is already "armed", we just have to tell the device
                         // to start sending us images
-                        printf( "Sending StartAcquisition command to device\n" );
+                        sprintf(message, "Sending StartAcquisition command to device\n" );
+                        printf("%s\n", message);
                         lDeviceParams->ExecuteCommand( "AcquisitionStart" );
                         
                         cameraReady = true;
@@ -519,30 +516,72 @@ void start_thread(void *(*routine) (void *), const Thread_data *tdata)
     return;
 }
 
+void gl_init(void) {
+    glGenTextures(1, &texture[0]);		// Create the texture
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glShadeModel(GL_SMOOTH);                    // Enable Smooth Shading
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);       // Black Background
+    glClearDepth(1.0f);                         // Depth Buffer Setup
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);     // Set Line Antialiasing
+    //glDisable(GL_BLEND);
+    glLineWidth(2.0);       // change the thickness of the HUD lines
+    //gl_load_gltextures();
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+}
+
+void gl_switchToOrtho (void)
+{
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
 void gl_display (void) {
     // the drawing function
-    glClearColor (0.0, 0.0, 0.0, 1.0); //clear the screen to black
-    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the color buffer and the depth buffer
+    //glClearColor (0.0, 0.0, 0.0, 1.0); //clear the screen to black
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the color buffer and the depth buffer
     glLoadIdentity();
-    //sprintf( message, "(testing! %lf, %lf)",  -12.0, 3.0);
-    //drawString(width/2.0, height/2.0, message);
-    //glTranslatef(0.0f,0.0f,-8.0f);          // Move into the screen 5 units
-    gl_load_gltextures();
+
+    //glMatrixMode(GL_PROJECTION);
+	//glLoadIdentity();
+	
+	//glViewport(0,0,w(),h());	
+   	//glOrtho(0.0f, width, height, 0.0f, 0.0f, -1.0f);
+   	//glMatrixMode(GL_MODELVIEW);
+	//glDisable(GL_DEPTH_TEST);
+	//glPushMatrix();
+   	//glLoadIdentity();
+   	//glClearColor(0.0, 0.0, 0.0, 0.0);
+   	//glClear(GL_COLOR_BUFFER_BIT);  
+ 
+    gl_draw_string( 400, 200, message);
+ 
+    glTranslatef(0.0f,0.0f,-8.0f);          // Move into the screen 5 units
+    //gl_load_gltextures();
     
-    glColor3f(1, 1, 1); //color the texture white
-    glBindTexture(GL_TEXTURE_2D, texture[0]);       // Select our texture
+    //glColor3f(1.0f, 1.0f, 1.0f); //color the texture white
+    //glBindTexture(GL_TEXTURE_2D, texture[0]);       // Select our texture
     
     // draw the camera image as a texture
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 1.0f);	// Bottom left of the texture and quad
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0.0f, 1.0f);	// Bottom right of the texture and quad
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(width,  height, 1.0f);	// Top right of the texture and quad
-    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f,  height, 1.0f);	// Top left of the texture and quad
-    glEnd();
+    //glBegin(GL_QUADS);
+    //glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 1.0f);	// Bottom left of the texture and quad
+    //glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0.0f, 1.0f);	// Bottom right of the texture and quad
+    //glTexCoord2f(1.0f, 1.0f); glVertex3f(width,  height, 1.0f);	// Top right of the texture and quad
+    //glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f,  height, 1.0f);	// Top left of the texture and quad
+    //glEnd();
     
-    glTranslatef(0.0f, 0.0f, -1.0f);
+    //glTranslatef(0.0f, 0.0f, -1.0f);
     // draw HUD
-    glColor3f(1, 1, 1); //HUD color is white
+
+    //gl_switchToOrtho();
+
+    glColor4f(1, 0, 1, 1); //HUD color is white
     
     // cross at center of screen
     // X - line
@@ -564,6 +603,10 @@ void gl_display (void) {
     gl_draw_circle(calib_center_x, calib_center_y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     gl_draw_circle(calib_center_x, calib_center_y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     
+    gl_draw_string(400, 400, message);
+    glRasterPos2i( 400, 400 );
+    glutBitmapCharacter( GLUT_BITMAP_HELVETICA_12, message[0] );
+    
     glutSwapBuffers(); //swap the buffers
     framerate();
 }
@@ -571,9 +614,7 @@ void gl_display (void) {
 void gl_reshape (int w, int h) {
     glViewport (0, 0, (GLsizei)w, (GLsizei)h); //set the viewport to the current window specifications
     glMatrixMode (GL_PROJECTION); //set the matrix to projection
-    
     glLoadIdentity ();
-
     glOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
     glMatrixMode (GL_MODELVIEW); //set the matrix back to model
     glLoadIdentity();
@@ -632,10 +673,10 @@ int main (int argc, char **argv) {
     read_camera_settings();
 
     // start the camera handling thread
-    //start_thread(CameraThread, NULL);
+    start_thread(CameraThread, NULL);
     
     glutInit (&argc, argv);
-    glutInitDisplayMode (GLUT_DOUBLE | GLUT_DEPTH); //set the display to Double buffer, with depth
+    glutInitDisplayMode (GLUT_DOUBLE); //set the display to Double buffer, with depth
     glutEnterGameMode(); //set glut to fullscreen using the settings in the line above
     gl_init(); // initialize the openGL window
     glutDisplayFunc (gl_display); //use the display function to draw everything
