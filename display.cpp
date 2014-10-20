@@ -17,7 +17,7 @@
 #include <signal.h>     /* for signal() */
 #include <unistd.h>     /* for sleep()  */
 #include <stdint.h>     /* for uint_16 */
-
+#include <inttypes.h>   /* for fscanf uint types */
 // openGL libraries
 #include <GL/gl.h>
 #include <GL/glut.h>
@@ -44,10 +44,8 @@ static float arcsec_to_pixel = 3.55;   // the plate scale
 unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
 unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
 
-static char message[1024];
-
-// file pointer to stored calibrated center
-FILE *file_ptr;
+// file pointer
+FILE *file_ptr = NULL;
 
 // to store the image
 unsigned char *data = new unsigned char[NUM_XPIXELS * NUM_YPIXELS];
@@ -57,15 +55,9 @@ struct CameraSettings
 {
     uint16_t exposure;
     uint16_t analogGain;
-    uint16_t preampGain;
+    int16_t preampGain;
     int blackLevel;
-};
-
-CameraSettings settings; //not protected!
-//settings.blackLevel = 0;
-//settings.preampGain = -3;
-//settings.exposure = 10000;
-//settings.analogGain = 400;
+} settings;
 
 bool is_camera_ready = false;
 
@@ -100,6 +92,8 @@ void gl_display (void);
 void gl_reshape (int w, int h);
 void keyboard (unsigned char key, int x, int y);
 void *CameraThread( void * threadargs, int camera_id);
+void read_calibrated_ccd_center(void);
+void read_camera_settings(void);
 void kill_all_threads();
 
 static int current_time(void)
@@ -241,8 +235,6 @@ void *CameraThread( void * threadargs)
     //cv::Mat localFrame, mockFrame;
     //HeaderData localHeader;
     //timespec localCaptureTime, preExposure, postExposure, timeElapsed, timeToWait;
-    int width, height;
-    int failcount = 0;
     
     uint16_t localExposure = settings.exposure;
     int16_t localPreampGain = settings.preampGain;
@@ -568,6 +560,32 @@ void keyboard (unsigned char key, int x, int y) {
         sleep(SLEEP_KILL);
         exit(0); //quit the program
     }
+    if (key=='s')
+    {
+        // save image here
+    }
+}
+
+void read_calibrated_ccd_center(void) {
+    file_ptr = fopen("calibrated_ccd_center.txt", "r");
+    if (file_ptr == NULL) {
+        printf("Can't open input file calibrated_ccd_center.txt!\n");
+    } else {
+        fscanf(file_ptr, "%u %u", &calib_center_x, &calib_center_y);
+        printf("Found center to be (%u,%u)\n", calib_center_x, calib_center_y);
+        fclose(file_ptr);
+    }
+}
+
+void read_camera_settings(void) {
+    file_ptr = fopen("camera_settings.txt"  , "r");
+    if (file_ptr == NULL) {
+        printf("Can't open input file camera_settings.txt!\n");
+    } else {
+        fscanf(file_ptr, "%" SCNu16 " %" SCNu16 " %" SCNd16 " %i", &settings.exposure, &settings.analogGain, &settings.preampGain, &settings.blackLevel);
+        printf("Found camera settings to be to be (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
+        fclose(file_ptr);
+    }
 }
 
 int main (int argc, char **argv) {
@@ -582,18 +600,12 @@ int main (int argc, char **argv) {
     for(int i = 0; i < MAX_THREADS; i++ ){
         started[0] = false;
     }
-    
+        
+    read_calibrated_ccd_center();
+    read_camera_settings();
+
     // start the camera handling thread
-    start_thread(CameraThread, NULL);
-    
-    file_ptr = fopen("calibrated_ccd_center.txt", "r");
-    if (file_ptr == NULL) {
-        printf("Can't open input file calibrated_ccd_center.txt!\n");
-    } else {
-        fscanf(file_ptr, "%u %u", calib_center_x, calib_center_y);
-        printf("Found center to be (%u,%u)\n", calib_center_x, calib_center_y);
-        fclose(file_ptr);
-    }
+    //start_thread(CameraThread, NULL);
     
     glutInit (&argc, argv);
     glutInitDisplayMode (GLUT_DOUBLE | GLUT_DEPTH); //set the display to Double buffer, with depth
