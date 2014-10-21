@@ -150,23 +150,21 @@ void framerate(void){
 static void gl_load_gltextures()
 {
     // Load bitmaps and convert to textures
-    for( int i = 0; i < height * width; i++){
-        data[i] = rand();
-    }
+    //for( int i = 0; i < height * width; i++){
+    //   data[i] = rand();
+    //}
     
     // Typical texture generation using data from the bitmap
     glBindTexture(GL_TEXTURE_2D, texture[0]);
-    
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (GLvoid*)data);
 }
 
 void gl_draw_string( int x, int y, char *str ) {
-    glColor3f( 1.0f, 1.0f, 1.0f);
+    glColor4f( 1.0f, 1.0f, 1.0f, 1.0f);
     glRasterPos2i( x, y );
     
     for ( int i=0, len=strlen(str); i<len; i++ ) {
@@ -527,67 +525,70 @@ void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 
 void gl_init(void) {
     glGenTextures(1, &texture[0]);		// Create the texture
+    glBindTexture(GL_TEXTURE_2D, texture[0]);       // Select our texture
 
+    //glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glShadeModel(GL_SMOOTH);                    // Enable Smooth Shading
+    //glEnable (GL_BLEND);
+    //glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glShadeModel(GL_SMOOTH);                    // Enable Smooth Shading
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);       // Black Background
     glClearDepth(1.0f);                         // Depth Buffer Setup
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);     // Set Line Antialiasing
     glLineWidth(2.0);       // change the thickness of the HUD lines
-    gl_load_gltextures();
+    //gl_load_gltextures();
+    //glEnable(GL_DEPTH_TEST);
     //glDepthMask(GL_TRUE);
-    
+    //glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
+	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
+	glClearDepth(1.0f);									// Depth Buffer Setup
+	//glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
+	//glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
+	glEnable(GL_BLEND);
+	glBlendFunc (GL_ONE, GL_ONE);
 }
 
 void gl_display (void) {
     // the drawing function
-    glClearColor (0.0, 0.0, 0.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the color buffer and the depth buffer
-    glLoadIdentity();
-     
-    //glDepthMask( GL_FALSE );
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+	glLoadIdentity();									// Reset The Current Modelview Matrix
+	//glPushMatrix(); 
 
-    glColor3f(1, 1, 1);
-    gl_load_gltextures();
-    glBindTexture(GL_TEXTURE_2D, texture[0]);       // Select our texture
+	gl_load_gltextures();
+
     // draw the camera image as a texture
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 1.0f);	// Bottom left of the texture and quad
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0.0f, 1.0f);	// Bottom right of the texture and quad
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(width,  height, 1.0f);	// Top right of the texture and quad
-    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f,  height, 1.0f);	// Top left of the texture and quad
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, -1.0f);	// Bottom left of the texture and quad
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0.0f, -1.0f);	// Bottom right of the texture and quad
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(width,  height, -1.0f);	// Top right of the texture and quad
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f,  height, -1.0f);	// Top left of the texture and quad
     glEnd();
 
-    //glDepthMask( GL_TRUE );
-    //glTranslatef(0, 0, 2);
-    //glBlendFunc(GL_ONE, GL_ONE);
-
-    glColor3f(1.0, 1.0, 1.0); //HUD color is white
-    //gl_draw_string( 40, 40, message);
-
-    // cross at center of screen
-    // X - line
-    //glBegin(GL_LINES);
-    //glVertex2f(0.0f, DEFAULT_CALIB_CENTER_Y);
-    //glVertex2f(width, DEFAULT_CALIB_CENTER_Y);
-    //glEnd();
+	glColor4f(1, 1, 1, 1);
+	gl_draw_string(100, 100, message);
+	
+	glBegin(GL_LINES); 
+    glVertex2f(0.0f, DEFAULT_CALIB_CENTER_Y);
+    glVertex2f(width, DEFAULT_CALIB_CENTER_Y);
+    glEnd();
     
-    // Y - line
-    //glBegin(GL_LINES);
-    //glVertex2f(calib_center_x, 0.0f);
-    //glVertex2f(calib_center_x, height);
-    //glEnd();
-    
-    // circle for Sun
-    //gl_draw_circle(calib_center_x, calib_center_y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    glBegin(GL_LINES); 
+     glVertex2f(0.0f, DEFAULT_CALIB_CENTER_Y);
+     glVertex2f(width, DEFAULT_CALIB_CENTER_Y);
+     glEnd();
+     
+     // Y - line
+     glBegin(GL_LINES);
+     glVertex2f(calib_center_x, 0.0f);
+     glVertex2f(calib_center_x, height);
+     glEnd();
+     
+     gl_draw_circle(calib_center_x, calib_center_y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+     
     // draw larger circles
-    //gl_draw_circle(calib_center_x, calib_center_y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
-    //gl_draw_circle(calib_center_x, calib_center_y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
-    
+    gl_draw_circle(calib_center_x, calib_center_y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, calib_center_y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+
     glutSwapBuffers(); //swap the buffers
     framerate();
 }
@@ -596,7 +597,8 @@ void gl_reshape (int w, int h) {
     glViewport (0, 0, (GLsizei)w, (GLsizei)h); //set the viewport to the current window specifications
     glMatrixMode (GL_PROJECTION); //set the matrix to projection
     glLoadIdentity ();
-    glOrtho(0.0f, width, height, 0.0f, 0.0f, 1.0f);
+    gluOrtho2D(0.0f, width, 0, height);
+    //gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,100.0f);
     glMatrixMode (GL_MODELVIEW); //set the matrix back to model
     glLoadIdentity();
 }
@@ -617,9 +619,7 @@ void keyboard (unsigned char key, int x, int y) {
 
         char filename[128];
         char timestamp[14];
-        struct tm *capturetime;
         timespec localCaptureTime;
-        
         clock_gettime(CLOCK_REALTIME, &localCaptureTime);
         
         writeCurrentUT(timestamp);    
@@ -629,6 +629,7 @@ void keyboard (unsigned char key, int x, int y) {
         // fill in some header information
         HeaderData keys;
 
+        // TODO; add unique ID for camera.
         keys.cameraID = 0;
         keys.frameCount = frameCount;
         keys.captureTime = localCaptureTime;

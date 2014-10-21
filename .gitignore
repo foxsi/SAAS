@@ -28,6 +28,8 @@ Icon
 .Spotlight-V100
 .Trashes
 
+*.fits
+
 # ignore built binaries
 display
 snap

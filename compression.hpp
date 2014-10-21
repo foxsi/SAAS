@@ -13,6 +13,7 @@ struct HeaderData
     int preampGain;
     int analogGain;
     int imageMinMax[2];
+    int plateScale;
 };
 
-int writeFITSImage(unsigned char *data, HeaderData keys, const std::string fileName);
+int writeFITSImage(unsigned char *data, HeaderData keys, const std::string fileName, int width, int height);
