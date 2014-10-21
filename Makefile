@@ -8,7 +8,7 @@ GCC_VERSION_GE_43 := $(shell expr `g++ -dumpversion | cut -f2 -d.` \>= 3)
 
 PUREGEV_ROOT = /opt/pleora/ebus_sdk
 OPENCVDIR = /usr/include/opencv2/
-#CCFITSDIR = /usr/include/CCfits/
+CCFITSDIR = /usr/include/CCfits/
 INCLUDE = -I$(OPENCVDIR) -I$(PUREGEV_ROOT)/include/ -I$(CCFITSDIR)
 
 CFLAGS = -Wall $(INCLUDE) -Wno-unknown-pragmas
@@ -25,10 +25,15 @@ IMPERX =-L$(PUREGEV_ROOT)/lib/		\
 	-lPvStreamRaw        		\
 	-lPvStream 
 THREAD = -lpthread
+CCFITS = -lCCfits
 X11 = -lX11
 GL = -lGL
 GLU = -lGLU
 GLUT = -lglut
+
+ifeq "$(GCC_VERSION_GE_43)" "1"
+    CCFITS += -lrt
+endif
 
 EXEC_CORE = snap
 EXEC_ALL = $(EXEC_CORE) display stream
@@ -43,8 +48,8 @@ snap: snap.cpp ImperxStream.o compression.o
 stream: stream.cpp
 	$(CC) $(CFLAGS) $^ -o $@ $(IMPERX)
 
-display: display.cpp
-	$(CC) $(CFLAGS) $^ -o $@ $(GL) $(GLU) $(GLUT) $(THREAD) $(IMPERX)
+display: display.cpp compression.o
+	$(CC) $(CFLAGS) $^ -o $@ $(GL) $(GLU) $(GLUT) $(THREAD) $(IMPERX) $(CCFITS)
 
 #This pattern matching will catch all "simple" object dependencies
 %.o: %.cpp %.hpp

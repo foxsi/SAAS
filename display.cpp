@@ -22,6 +22,8 @@
 #include <GL/gl.h>
 #include <GL/glut.h>
 
+#include "compression.hpp"
+
 // imperx camera libraries
 #include <PvSampleUtils.h>
 #include <PvDevice.h>
@@ -40,6 +42,7 @@
 static float width = NUM_XPIXELS;
 static float height = NUM_YPIXELS;
 static float arcsec_to_pixel = 3.55;   // the plate scale
+long int frameCount = 0;
 
 unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
 unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
@@ -51,6 +54,9 @@ char message[100] = "Starting Up";
 
 // to store the image
 unsigned char *data = new unsigned char[NUM_XPIXELS * NUM_YPIXELS];
+// to write the image
+unsigned char *data_save = new unsigned char[NUM_XPIXELS * NUM_YPIXELS];
+
 GLuint texture[1];      	// Storage for one texture to display the camera image
 
 struct CameraSettings
@@ -99,6 +105,16 @@ void *CameraThread( void * threadargs, int camera_id);
 void read_calibrated_ccd_center(void);
 void read_camera_settings(void);
 void kill_all_threads();
+void writeCurrentUT(char *buffer);
+
+void writeCurrentUT(char *buffer)
+{
+    time_t now;
+    time(&now);
+    struct tm *now_tm;
+    now_tm = gmtime(&now);
+    strftime(buffer,14,"%y%m%d_%H%M%S",now_tm);
+}
 
 static int current_time(void)
 {
@@ -212,7 +228,6 @@ void *CameraThread( void * threadargs)
     
     //timespec frameRate = {0,FRAME_CADENCE*1000};
     bool cameraReady = false;
-    long int frameCount = 0;
     
     //cv::Mat localFrame, mockFrame;
     //HeaderData localHeader;
@@ -419,6 +434,7 @@ void *CameraThread( void * threadargs)
                         lWidth = lBuffer->GetImage()->GetWidth();
                         lHeight = lBuffer->GetImage()->GetHeight();
                         data = lImage->GetDataPointer();
+                        frameCount++;
                     }
                     
                     printf( "%c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s\r",
@@ -588,6 +604,7 @@ void gl_reshape (int w, int h) {
 void keyboard (unsigned char key, int x, int y) {
     if (key=='q')
     {
+        // quite the program
         glutLeaveGameMode(); //set the resolution how it was
         kill_all_threads();
         sleep(SLEEP_KILL);
@@ -595,7 +612,32 @@ void keyboard (unsigned char key, int x, int y) {
     }
     if (key=='s')
     {
-        // save image here
+        // save an image as a FITS file
+        memcpy( &data_save, &data, sizeof(data));
+
+        char filename[128];
+        char timestamp[14];
+        struct tm *capturetime;
+        timespec localCaptureTime;
+        
+        clock_gettime(CLOCK_REALTIME, &localCaptureTime);
+        
+        writeCurrentUT(timestamp);    
+        sprintf(filename, "FOXSI_SAAS_%s.fits", timestamp);
+        filename[128 - 1] = '\0';
+
+        // fill in some header information
+        HeaderData keys;
+
+        keys.cameraID = 0;
+        keys.frameCount = frameCount;
+        keys.captureTime = localCaptureTime;
+        keys.exposure = settings.exposure;
+        keys.preampGain = settings.preampGain;
+        keys.analogGain = settings.analogGain;
+        keys.plateScale = arcsec_to_pixel;
+
+        writeFITSImage(data_save, keys, filename, NUM_XPIXELS, NUM_YPIXELS);
     }
 }
 
