@@ -527,8 +527,6 @@ void gl_init(void) {
     glGenTextures(1, &texture[0]);		// Create the texture
     glBindTexture(GL_TEXTURE_2D, texture[0]);       // Select our texture
 
-    //glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
     //glEnable (GL_BLEND);
     //glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glShadeModel(GL_SMOOTH);                    // Enable Smooth Shading
@@ -537,12 +535,11 @@ void gl_init(void) {
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);     // Set Line Antialiasing
     glLineWidth(2.0);       // change the thickness of the HUD lines
     //gl_load_gltextures();
-    //glEnable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
     //glDepthMask(GL_TRUE);
     //glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
 	glClearDepth(1.0f);									// Depth Buffer Setup
-	//glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	//glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
 	glEnable(GL_BLEND);
 	glBlendFunc (GL_ONE, GL_ONE);
@@ -557,34 +554,32 @@ void gl_display (void) {
 	gl_load_gltextures();
 
     // draw the camera image as a texture
+    glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, -1.0f);	// Bottom left of the texture and quad
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0.0f, -1.0f);	// Bottom right of the texture and quad
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(width,  height, -1.0f);	// Top right of the texture and quad
-    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f,  height, -1.0f);	// Top left of the texture and quad
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);	// Bottom left of the texture and quad
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0.0f, 0.0f);	// Bottom right of the texture and quad
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(width,  height, 0.0f);	// Top right of the texture and quad
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f,  height, 0.0f);	// Top left of the texture and quad
     glEnd();
+    glDisable(GL_TEXTURE_2D);
 
 	glColor4f(1, 1, 1, 1);
+    // draw the message string
 	gl_draw_string(100, 100, message);
 	
+    // X - line
 	glBegin(GL_LINES); 
     glVertex2f(0.0f, DEFAULT_CALIB_CENTER_Y);
     glVertex2f(width, DEFAULT_CALIB_CENTER_Y);
     glEnd();
     
-    glBegin(GL_LINES); 
-     glVertex2f(0.0f, DEFAULT_CALIB_CENTER_Y);
-     glVertex2f(width, DEFAULT_CALIB_CENTER_Y);
-     glEnd();
+    // Y - line
+    glBegin(GL_LINES);
+    glVertex2f(calib_center_x, 0.0f);
+    glVertex2f(calib_center_x, height);
+    glEnd();
      
-     // Y - line
-     glBegin(GL_LINES);
-     glVertex2f(calib_center_x, 0.0f);
-     glVertex2f(calib_center_x, height);
-     glEnd();
-     
-     gl_draw_circle(calib_center_x, calib_center_y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
-     
+    gl_draw_circle(calib_center_x, calib_center_y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     // draw larger circles
     gl_draw_circle(calib_center_x, calib_center_y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     gl_draw_circle(calib_center_x, calib_center_y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
