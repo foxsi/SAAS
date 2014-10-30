@@ -43,6 +43,7 @@ static float width = NUM_XPIXELS;
 static float height = NUM_YPIXELS;
 static float arcsec_to_pixel = 3.55;   // the plate scale
 long int frameCount = 0;
+float camera_temperature = 0.0;
 
 unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
 unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
@@ -432,6 +433,13 @@ void *CameraThread( void * threadargs)
                         lWidth = lBuffer->GetImage()->GetWidth();
                         lHeight = lBuffer->GetImage()->GetHeight();
                         data = lImage->GetDataPointer();
+                        
+                        // Get the camera temperature - this may slow down image aquisition...
+                        long long int lTempValue = -512;
+                        lDevice.GetGenParameters()->GetIntegerValue( "GetTemperature", lTempValue );
+                        if (lTempValue >= 512) lTempValue = lTempValue - 1024;
+                        camera_temperature = (float)lTempValue / 4.;
+                        sprintf(message, "Aquiring %f", camera_temperature );
                         frameCount++;
                     }
                     
