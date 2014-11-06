@@ -436,10 +436,13 @@ void *CameraThread( void * threadargs)
                         
                         // Get the camera temperature - this may slow down image aquisition...
                         long long int lTempValue = -512;
+                        char timestamp[14];
+                        writeCurrentUT(timestamp);
+                        
                         lDevice.GetGenParameters()->GetIntegerValue( "GetTemperature", lTempValue );
                         if (lTempValue >= 512) lTempValue = lTempValue - 1024;
                         camera_temperature = (float)lTempValue / 4.;
-                        sprintf(message, "Aquiring %f", camera_temperature );
+                        sprintf(message, "%s - Aquiring: %5.1f C", timestamp, camera_temperature );
                         frameCount++;
                     }
                     
