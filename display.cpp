@@ -640,13 +640,14 @@ void keyboard (unsigned char key, int x, int y) {
         keys.cameraID = 530033;
         keys.frameCount = frameCount;
         keys.captureTime = localCaptureTime;
-        keys.exposure = settings.exposure;
-        keys.preampGain = settings.preampGain;
-        keys.analogGain = settings.analogGain;
+        keys.exposure = (int)settings.exposure;
+        keys.preampGain = (int)settings.preampGain;
+        keys.analogGain = (float)settings.analogGain;
         keys.plateScale = arcsec_to_pixel;
         keys.cameraTemperature = camera_temperature;
 
         writeFITSImage(data_save, keys, filename, NUM_XPIXELS, NUM_YPIXELS);
+        sprintf(message, "Image saved");
     }
 }
 

@@ -10,10 +10,10 @@ struct HeaderData
     long frameCount;
     int exposure;
     timespec imageWriteTime;
-    int preampGain;
+    float preampGain;
     int analogGain;
     int imageMinMax[2];
-    int plateScale;
+    float plateScale;
 };
 
 int writeFITSImage(unsigned char *data, HeaderData keys, const std::string fileName, int width, int height);
