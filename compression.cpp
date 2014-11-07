@@ -97,7 +97,7 @@ int writeFITSImage(unsigned char *data, HeaderData keys, const std::string fileN
 
     pFits->pHDU().addKey("FILENAME", fileName , "Name of the data file");
     //pFits->pHDU().addKey("TIME", 0 , "Time of observation in seconds within a day");
-    pFits->pHDU().addKey("CAMERASERIAL", (int)keys.cameraID , "Serial Number of camera");
+    pFits->pHDU().addKey("CAMERAID", (int)keys.cameraID , "Serial Number of camera");
     pFits->pHDU().addKey("EXPOSURE", (int)keys.exposure,"Exposure time in usec");
     pFits->pHDU().addKey("GAIN_PRE", (float)keys.preampGain, "Preamp gain of CCD");
     pFits->pHDU().addKey("GAIN_ANA", (int)keys.analogGain, "Analog gain of CCD");
