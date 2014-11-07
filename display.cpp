@@ -308,6 +308,7 @@ void *CameraThread( void * threadargs)
                     // Connect to the GEV Device
                     sprintf(message, "Connecting to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
                     printf("%s\n", message);
+                    //sprintf(serial_number, lDeviceInfo->GetSerialNumber().GetAscii());
                     if ( !lDevice.Connect( lDeviceInfo ).IsOK() )
                     {
                         printf( "Unable to connect to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
