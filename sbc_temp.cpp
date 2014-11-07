@@ -13,8 +13,10 @@ int main() {
         return 1;
     }
     
-    outb(0x40, EC_INDEX); //access to start/stop register start = 0x01 | inb(EC_DATA);
-    outb(start, EC_DATA); //activate monitor mode printf("Press CTRL+C to cancel!\n"); printf("AMBIENT\n");
+    outb(0x40, EC_INDEX); //access to start/stop register
+    start = 0x01 | inb(EC_DATA);
+    outb(start, EC_DATA); //activate monitor mode
+    printf("AMBIENT\n");
     
     outb(0x26, EC_INDEX);  //read out ambient temp
     ambtemp = inb(EC_DATA);

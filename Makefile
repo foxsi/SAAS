@@ -35,8 +35,8 @@ ifeq "$(GCC_VERSION_GE_43)" "1"
     CCFITS += -lrt
 endif
 
-EXEC_CORE = snap
-EXEC_ALL = $(EXEC_CORE) display stream
+EXEC_CORE = display
+EXEC_ALL = $(EXEC_CORE) sbc_temp
 
 default: $(EXEC_CORE)
 
@@ -44,6 +44,9 @@ all: $(EXEC_ALL)
 
 snap: snap.cpp ImperxStream.o compression.o
 	$(CC) $(CFLAGS) $^ -o $@ $(IMPERX)
+
+sbc_temp: sbc_temp.cpp
+	$(CC) $(CFLAGS) $^ -o $@
 
 stream: stream.cpp
 	$(CC) $(CFLAGS) $^ -o $@ $(IMPERX)

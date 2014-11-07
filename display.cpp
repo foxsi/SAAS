@@ -637,13 +637,14 @@ void keyboard (unsigned char key, int x, int y) {
         HeaderData keys;
 
         // TODO; add unique ID for camera.
-        keys.cameraID = 0;
+        keys.cameraID = 530033;
         keys.frameCount = frameCount;
         keys.captureTime = localCaptureTime;
         keys.exposure = settings.exposure;
         keys.preampGain = settings.preampGain;
         keys.analogGain = settings.analogGain;
         keys.plateScale = arcsec_to_pixel;
+        keys.cameraTemperature = camera_temperature;
 
         writeFITSImage(data_save, keys, filename, NUM_XPIXELS, NUM_YPIXELS);
     }
