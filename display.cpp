@@ -652,7 +652,7 @@ void keyboard (unsigned char key, int x, int y) {
 }
 
 void read_calibrated_ccd_center(void) {
-    file_ptr = fopen("calibrated_ccd_center.txt", "r");
+    file_ptr = fopen("/home/schriste/SAAS/calibrated_ccd_center.txt", "r");
     if (file_ptr == NULL) {
         printf("Can't open input file calibrated_ccd_center.txt!\n");
     } else {
@@ -663,7 +663,7 @@ void read_calibrated_ccd_center(void) {
 }
 
 void read_camera_settings(void) {
-    file_ptr = fopen("camera_settings.txt"  , "r");
+    file_ptr = fopen("/home/schriste/SAAS/camera_settings.txt"  , "r");
     if (file_ptr == NULL) {
         printf("Can't open input file camera_settings.txt!\n");
     } else {
