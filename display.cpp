@@ -562,6 +562,7 @@ void gl_display (void) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 	glLoadIdentity();									// Reset The Current Modelview Matrix
 	//glPushMatrix(); 
+    glScaled(-1, -1, 1);
 
 	gl_load_gltextures();
 
