@@ -41,7 +41,7 @@
 // width and height of IMPERX Camera frame
 static float width = NUM_XPIXELS;
 static float height = NUM_YPIXELS;
-static float arcsec_to_pixel = 3.55;   // the plate scale
+static float arcsec_to_pixel = 3.1;   // the plate scale
 long int frameCount = 0;
 float camera_temperature = 0.0;
 
@@ -591,10 +591,10 @@ void gl_display (void) {
     glVertex2f(calib_center_x, height);
     glEnd();
      
-    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 30 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     // draw larger circles
-    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
-    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 90 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
 
     glutSwapBuffers(); //swap the buffers
     framerate();
