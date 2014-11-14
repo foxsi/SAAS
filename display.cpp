@@ -581,8 +581,8 @@ void gl_display (void) {
 	
     // X - line
 	glBegin(GL_LINES); 
-    glVertex2f(0.0f, DEFAULT_CALIB_CENTER_Y);
-    glVertex2f(width, DEFAULT_CALIB_CENTER_Y);
+    glVertex2f(0.0f, calib_center_y);
+    glVertex2f(width, calib_center_y);
     glEnd();
     
     // Y - line
