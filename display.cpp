@@ -581,8 +581,8 @@ void gl_display (void) {
 	
     // X - line
 	glBegin(GL_LINES); 
-    glVertex2f(0.0f, calib_center_y);
-    glVertex2f(width, calib_center_y);
+    glVertex2f(0.0f, NUM_YPIXELS - calib_center_y);
+    glVertex2f(width, NUM_YPIXELS - calib_center_y);
     glEnd();
     
     // Y - line
@@ -591,10 +591,10 @@ void gl_display (void) {
     glVertex2f(calib_center_x, height);
     glEnd();
      
-    gl_draw_circle(calib_center_x, calib_center_y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 30 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     // draw larger circles
-    gl_draw_circle(calib_center_x, calib_center_y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
-    gl_draw_circle(calib_center_x, calib_center_y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 60 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 90 * arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
 
     glutSwapBuffers(); //swap the buffers
     framerate();
