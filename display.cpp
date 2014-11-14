@@ -561,18 +561,17 @@ void gl_display (void) {
     // the drawing function
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 	glLoadIdentity();									// Reset The Current Modelview Matrix
-	//glPushMatrix(); 
-    glScaled(-1, -1, 1);
+	//glPushMatrix();
 
 	gl_load_gltextures();
 
     // draw the camera image as a texture
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);	// Bottom left of the texture and quad
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0.0f, 0.0f);	// Bottom right of the texture and quad
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(width,  height, 0.0f);	// Top right of the texture and quad
-    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f,  height, 0.0f);	// Top left of the texture and quad
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 0.0f, 0.0f);	// Bottom left of the texture and quad
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(width, 0.0f, 0.0f);	// Bottom right of the texture and quad
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(width,  height, 0.0f);	// Top right of the texture and quad
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f,  height, 0.0f);	// Top left of the texture and quad
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
