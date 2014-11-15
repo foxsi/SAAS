@@ -575,6 +575,7 @@ void gl_display (void) {
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+    // draw the HUD
 	glColor4f(1, 1, 1, 1);
     // draw the message string
 	gl_draw_string(100, 100, message);
@@ -590,12 +591,40 @@ void gl_display (void) {
     glVertex2f(calib_center_x, 0.0f);
     glVertex2f(calib_center_x, height);
     glEnd();
-     
-    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 15 * 60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
-    // draw larger circles
-    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 30 * 60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
-    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 45 * 60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
 
+    // Sun is 32 arcminutes across (radius of 16 arcminutes)
+    // half a Sun
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 8*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    // full Sun
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 16*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    // 1.5 Sun
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 24*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+
+    for (int i = 0; i < 48; i++) {
+        glBegin(GL_LINES);
+        if (i < 24) {
+            glVertex2f(calib_center_x - 5, calib_center_y + i * 60 / arcsec_to_pixel);
+            glVertex2f(calib_center_x + 5, calib_center_y + i * 60 / arcsec_to_pixel);
+        } else {
+            glVertex2f(calib_center_x - 5, calib_center_y + (24 - i) * 60 / arcsec_to_pixel);
+            glVertex2f(calib_center_x + 5, calib_center_y + (24 - i) * 60 / arcsec_to_pixel);
+        }
+        glEnd();
+    }
+    
+    
+    for (int i = 0; i < 48; i++) {
+        glBegin(GL_LINES);
+        if (i < 24) {
+            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y - 5);
+            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y + 5);
+        } else {
+            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y - 5);
+            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y + 5);
+        }
+        glEnd();
+    }
+    
     glutSwapBuffers(); //swap the buffers
     framerate();
 }
