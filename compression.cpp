@@ -67,8 +67,8 @@ int writeFITSImage(unsigned char *data, HeaderData keys, const std::string fileN
 
     pFits->pHDU().addKey("INSTRUME",std::string("SAAS"),"Name of instrument");
     pFits->pHDU().addKey("ORIGIN", std::string("FOXSI/SAAS SBC") , "Location where file was made");
-    pFits->pHDU().addKey("WAVELNTH", (long)6300, "Wavelength of observation (ang)");
-    pFits->pHDU().addKey("WAVE_STR", std::string("630 Nm"), "Wavelength of observation string");
+    pFits->pHDU().addKey("WAVELNTH", (long)6320, "Wavelength of observation (ang)");
+    pFits->pHDU().addKey("WAVE_STR", std::string("632 Nm"), "Wavelength of observation string");
     pFits->pHDU().addKey("BITPIX", (long) 8, "Bit depth of image");
     pFits->pHDU().addKey("BZERO", (long) 128, "Bit depth of image");
     pFits->pHDU().addKey("BSCALE", (float) 1.0, "Bit depth of image");
