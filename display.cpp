@@ -173,7 +173,7 @@ void gl_draw_string( int x, int y, char *str ) {
             y -= 16;
             glRasterPos2i( x, y );
         } else {
-            glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18, str[i] );
+            glutBitmapCharacter( GLUT_BITMAP_TIMES_ROMAN_24, str[i] );
         }
     }
 }
