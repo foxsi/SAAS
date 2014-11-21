@@ -1,2 +1,2 @@
-30000 0 0 0
+1000 100 +3 0
 #exposure analogGain preampGain blackLevel
