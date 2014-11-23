@@ -616,11 +616,11 @@ void gl_display (void) {
     for (int i = 0; i < 48; i++) {
         glBegin(GL_LINES);
         if (i < 24) {
-            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y - 5);
-            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y + 5);
+            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y - 10);
+            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y + 10);
         } else {
-            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y - 5);
-            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y + 5);
+            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y - 10);
+            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y + 10);
         }
         glEnd();
     }
