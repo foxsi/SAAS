@@ -81,7 +81,7 @@ bool is_camera_ready = false;
 bool stop_message[MAX_THREADS];
 pthread_t threads[MAX_THREADS];
 bool started[MAX_THREADS];
-pthread_mutex_t mutexFrame;     //Used to protect image data
+pthread_mutex_t mutexStartThread; //Keeps new threads from being started simultaneously
 
 sig_atomic_t volatile g_running = 1;
 
@@ -459,10 +459,10 @@ void *CameraThread( void * threadargs)
                         sprintf(message, "%s - Aquiring: %5.1f C", timestamp, camera_temperature );
 
                         if (frameCount % MOD_SAVE == 0){
-                            printf("Saving image number %i.", saveCount);
-                            //Thread_data tdata;
-                            //tdata.camera_id = camera_id;
-                            //start_thread(ImageSaveThread, &tdata);
+                            // start thread to save the image.
+                            Thread_data tdata;
+                            start_thread(ImageSaveThread, &tdata);
+                            }
                         }
                         frameCount++;
                     }
@@ -530,10 +530,12 @@ void sig_handler(int signum)
 
 void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 {
+    pthread_mutex_lock(&mutexStartThread);
+
     int i = 0;
     while (started[i] == true) {
         i++;
-        if (i == MAX_THREADS) return; //should probably thrown an exception
+        if (i == MAX_THREADS) return; //should probably throw an exception
     }
 
     //Copy the thread data to a global to prevent deallocation
@@ -552,6 +554,8 @@ void start_thread(void *(*routine) (void *), const Thread_data *tdata)
     } else started[i] = true;
 
     pthread_attr_destroy(&attr);
+    pthread_mutex_unlock(&mutexStartThread);
+
     return;
 }
 
@@ -663,54 +667,20 @@ void keyboard (unsigned char key, int x, int y) {
     if (key=='q')
     {
         // quite the program
+        printf("Quitting and cleaning up.\n");
         glutLeaveGameMode(); //set the resolution how it was
         kill_all_threads();
+        pthread_mutex_destroy(&CameraThread);
+        pthread_exit(NULL);
         sleep(SLEEP_KILL);
         exit(0); //quit the program
     }
     if (key=='s')
     {
-        // if images are currently saving automatically disable this
+        // if images are currently saving automatically disable this functionality
         if (!isSavingImages){
-            timespec preExposure, postExposure, timeElapsed;
-            clock_gettime(CLOCK_MONOTONIC, &preExposure);
-            // save an image as a FITS file
-            memcpy( &data_save, &data, sizeof(data));
-
-            char filename[128];
-            char timestamp[14];
-            timespec localCaptureTime;
-            clock_gettime(CLOCK_REALTIME, &localCaptureTime);
-
-            writeCurrentUT(timestamp);
-
-            // fill in some header information
-            HeaderData localHeader;
-
-            // TODO; add unique ID for camera.
-            localHeader.cameraID = 530033;
-            localHeader.frameCount = frameCount;
-            localHeader.captureTime = localCaptureTime;
-            localHeader.exposure = (int)settings.exposure;
-            localHeader.preampGain = (int)settings.preampGain;
-            localHeader.analogGain = (float)settings.analogGain;
-            localHeader.plateScale = arcsec_to_pixel;
-            localHeader.cameraTemperature = camera_temperature;
-
-            sprintf(filename, "%s%s_%s_%03d_%06d.fits",
-                SAVE_LOCATION,
-                "foxsi_saas",
-                timestamp, (int)(localHeader.captureTime.tv_nsec/1000000l),
-                (int)localHeader.frameCount);
-
-            //sprintf(filename, "FOXSI_SAAS_%s.fits", timestamp);
-            filename[128 - 1] = '\0';
-
-            writeFITSImage(data_save, localHeader, filename, NUM_XPIXELS, NUM_YPIXELS);
-            //Determine time spent on camera exposure
-            clock_gettime(CLOCK_MONOTONIC, &postExposure);
-            timeElapsed = TimespecDiff(preExposure, postExposure);
-            sprintf(message, "Image saved in %lld.%.9ld", (long long)ts.tv_sec, ts.tv_nsec);
+            Thread_data tdata;
+            start_thread(ImageSaveThread, &tdata);
         } else {
             sprintf(message, "Manual Saving Disabled.");
         }
@@ -764,42 +734,52 @@ void read_settings(void) {
         }
     } else {
         printf("Can't open input file program_settings.txt!\n");
-
-        fscanf(file_ptr, "%" SCNu16 " %" SCNu16 " %" SCNd16 " %i", &settings.exposure, &settings.analogGain, &settings.preampGain, &settings.blackLevel);
-        printf("Found camera settings to be to be (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
-        fclose(file_ptr);
+        printf("Default camera settings are (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
     }
 }
 
 void *ImageSaveThread(void *threadargs)
 {
-    // save an image as a FITS file
-    memcpy( &data_save, &data, sizeof(data));
-
     char filename[128];
     char timestamp[14];
     timespec localCaptureTime;
+    timespec preSave, postSave, elapsedSave;
+    HeaderData localHeader;
+
+    long tid = (long)((struct Thread_data *)threadargs)->thread_id;
+    struct Thread_data *my_data;
+    my_data = (struct Thread_data *) threadargs;
+
+    clock_gettime(CLOCK_MONOTONIC, &preSave);
+
+    // save an image as a FITS file
+    memcpy( &data_save, &data, sizeof(data));
+
     clock_gettime(CLOCK_REALTIME, &localCaptureTime);
 
     writeCurrentUT(timestamp);
     sprintf(filename, "FOXSI_SAAS_%s.fits", timestamp);
     filename[128 - 1] = '\0';
 
-    // fill in some header information
-    HeaderData keys;
-
     // TODO; add unique ID for camera.
-    keys.cameraID = 530033;
-    keys.frameCount = frameCount;
-    keys.captureTime = localCaptureTime;
-    keys.exposure = (int)settings.exposure;
-    keys.preampGain = (int)settings.preampGain;
-    keys.analogGain = (float)settings.analogGain;
-    keys.plateScale = arcsec_to_pixel;
-    keys.cameraTemperature = camera_temperature;
+    localHeader.cameraID = 530033;
+    localHeader.frameCount = frameCount;
+    localHeader.captureTime = localCaptureTime;
+    localHeader.exposure = (int)settings.exposure;
+    localHeader.preampGain = (int)settings.preampGain;
+    localHeader.analogGain = (float)settings.analogGain;
+    localHeader.plateScale = arcsec_to_pixel;
+    localHeader.cameraTemperature = camera_temperature;
 
-    writeFITSImage(data_save, keys, filename, NUM_XPIXELS, NUM_YPIXELS);
+    writeFITSImage(data_save, localHeader, filename, NUM_XPIXELS, NUM_YPIXELS);
     saveCount++;
+
+    clock_gettime(CLOCK_MONOTONIC, &postSave);
+    elapsedSave = TimespecDiff(preSave, postSave);
+    printf("Saving took: %d s %d ns\n", elapsedSave.tv_sec, elapsedSave.tv_nsec)
+
+    started[tid] = false;
+    pthread_exit(NULL);
 }
 
 int main (int argc, char **argv) {
@@ -807,7 +787,7 @@ int main (int argc, char **argv) {
     signal(SIGINT, &sig_handler);
     signal(SIGTERM, &sig_handler);
 
-    pthread_mutex_init(&mutexFrame, NULL);
+    pthread_mutex_init(&mutexStartThread, NULL);
     /* Create worker threads */
     printf("In main: creating threads\n");
 
@@ -830,5 +810,12 @@ int main (int argc, char **argv) {
     glutReshapeFunc (gl_reshape); //reshape the window accordingly
     glutKeyboardFunc (keyboard); //check the keyboard
     glutMainLoop (); //call the main loop
+
+    /* Last thing that main() should do */
+    printf("Quitting and cleaning up.\n");
+    /* wait for threads to finish */
+    kill_all_threads();
+    pthread_mutex_destroy(&CameraThread);
+    pthread_exit(NULL);
     return 0;
 }
