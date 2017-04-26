@@ -1,2 +1,5 @@
-10000 400 -3 0
-#exposure analogGain preampGain blackLevel
+exposure 10000
+analogGain 400
+preampGain -3
+blackLevel 0
+save_images 0

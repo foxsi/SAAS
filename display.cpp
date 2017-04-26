@@ -53,7 +53,7 @@ float camera_temperature = 0.0;
 unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
 unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
 
-bool isSavingImages = SAVE_IMAGES; // is the PYAS/RAS saving images?
+bool isSavingImages = SAVE_IMAGES;
 
 // file pointer
 FILE *file_ptr = NULL;
@@ -729,10 +729,42 @@ void read_calibrated_ccd_center(void) {
 }
 
 void read_settings(void) {
+    int count = 0;
+    char varname[128];
+    int value;
     file_ptr = fopen("/home/schriste/SAAS/program_settings.txt"  , "r");
-    if (file_ptr == NULL) {
-        printf("Can't open input file camera_settings.txt!\n");
+    if( file_ptr != NULL){
+        printf("Reading program settings...");
+        while (EOF != fscanf(fp, "%s %d", varname, &val)){
+            printf("%d: %s %d\n", count, varname, val);
+            switch (count) {
+                case 0:
+                    settings.exposure = val;
+                    printf("Exposure is set to %d", settings.exposure);
+                    break;
+                case 1:
+                    settings.analogGain = val;
+                    printf("analogGain is set to %d", settings.analogGain);
+                    break;
+                case 2:
+                    settings.preampGain = val;
+                    printf("preampGain is set to %d", settings.preampGain);
+                    break;
+                case 3:
+                    settings.blackLevel = val;
+                    printf("blackLevel is set to %d", settings.blackLevel);
+                    break;
+                case 4:
+                    isSavingImages = val;
+                    printf("isSavingImages is set to %d", isSavingImages);
+                default:
+                    break;
+            }
+            count++;
+        }
     } else {
+        printf("Can't open input file program_settings.txt!\n");
+
         fscanf(file_ptr, "%" SCNu16 " %" SCNu16 " %" SCNd16 " %i", &settings.exposure, &settings.analogGain, &settings.preampGain, &settings.blackLevel);
         printf("Found camera settings to be to be (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
         fclose(file_ptr);
