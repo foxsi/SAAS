@@ -11,6 +11,12 @@
 #define NUM_XPIXELS         1296    // number of X pixels of sensor
 #define NUM_YPIXELS         966     // number of Y pixels of sensor
 
+// Camera Defaults, overwritten by program_settings.txt
+#define DEFAULT_CAMERA_EXPOSURE 10000
+#define DEFAULT_CAMERA_AGAIN    400
+#define DEFAULT_CAMERA_PGAIN    -3
+#define DEFAULT_CAMERA_BLEVEL   0
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -67,13 +73,16 @@ unsigned char *data_save = new unsigned char[NUM_XPIXELS * NUM_YPIXELS];
 
 GLuint texture[1];      	// Storage for one texture to display the camera image
 
-struct CameraSettings
-{
+typedef struct CameraSettings{
     uint16_t exposure;
     uint16_t analogGain;
     int16_t preampGain;
     int blackLevel;
-} settings;
+} CameraSettings;
+
+// load default values, should be overwritten by program_settings.txt if exists
+CameraSettings settings = { .exposure = DEFAULT_CAMERA_EXPOSURE, .analogGain = DEFAULT_CAMERA_AGAIN,
+                            .preampGain = DEFAULT_CAMERA_PGAIN, .blackLevel = DEFAULT_CAMERA_BLEVEL};
 
 bool is_camera_ready = false;
 
@@ -713,29 +722,29 @@ void read_settings(void) {
     int value;
     file_ptr = fopen("/home/schriste/SAAS/program_settings.txt"  , "r");
     if( file_ptr != NULL){
-        printf("Reading program settings...");
+        printf("Reading program settings...\n");
         while (EOF != fscanf(file_ptr, "%s %d", varname, &value)){
             printf("%d: %s %d\n", count, varname, value);
             switch (count) {
                 case 0:
                     settings.exposure = value;
-                    printf("Exposure is set to %d", settings.exposure);
+                    printf("Exposure is set to %d\n", settings.exposure);
                     break;
                 case 1:
                     settings.analogGain = value;
-                    printf("analogGain is set to %d", settings.analogGain);
+                    printf("analogGain is set to %d\n", settings.analogGain);
                     break;
                 case 2:
                     settings.preampGain = value;
-                    printf("preampGain is set to %d", settings.preampGain);
+                    printf("preampGain is set to %d\n", settings.preampGain);
                     break;
                 case 3:
                     settings.blackLevel = value;
-                    printf("blackLevel is set to %d", settings.blackLevel);
+                    printf("blackLevel is set to %d\n", settings.blackLevel);
                     break;
                 case 4:
                     isSavingImages = value;
-                    printf("isSavingImages is set to %d", isSavingImages);
+                    printf("isSavingImages is set to %d\n", isSavingImages);
                 default:
                     break;
             }
