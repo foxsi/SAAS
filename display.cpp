@@ -65,6 +65,7 @@ bool isSavingImages = SAVE_IMAGES;
 FILE *file_ptr = NULL;
 
 char message[100] = "Starting Up";
+int cameraID = 0;
 
 // to store the image
 unsigned char *data = new unsigned char[NUM_XPIXELS * NUM_YPIXELS];
@@ -330,6 +331,7 @@ void *CameraThread( void * threadargs)
                                lDeviceInfo->GetIPAddress().GetAscii(),
                                lDeviceInfo->GetSerialNumber().GetAscii() );
                         printf("%s\n", message);
+                        cameraID = atoi(lDeviceInfo->GetSerialNumber().GetAscii());
                     }
                 }
 
@@ -485,7 +487,7 @@ void *CameraThread( void * threadargs)
                         }
                         frameCount++;
                     }
-                    printf( "%c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s\r",
+                    printf( "\n %c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s\r",
                            lDoodle[ lDoodleIndex ],
                            lBuffer->GetBlockID(),
                            lWidth,
@@ -781,7 +783,7 @@ void *ImageSaveThread(void *threadargs)
     filename[128 - 1] = '\0';
 
     // TODO; add unique ID for camera.
-    localHeader.cameraID = 530033;
+    localHeader.cameraID = cameraID;  // this is the serial number of the camera
     localHeader.frameCount = frameCount;
     localHeader.captureTime = localCaptureTime;
     localHeader.exposure = (int)settings.exposure;
@@ -795,7 +797,7 @@ void *ImageSaveThread(void *threadargs)
 
     clock_gettime(CLOCK_MONOTONIC, &postSave);
     elapsedSave = TimespecDiff(preSave, postSave);
-    printf("Saving took: %ld sec %ld nsec\n", elapsedSave.tv_sec, elapsedSave.tv_nsec);
+    printf("Saving took: %ld sec %ld nsec \n", elapsedSave.tv_sec, elapsedSave.tv_nsec);
 
     started[tid] = false;
     pthread_exit(NULL);
