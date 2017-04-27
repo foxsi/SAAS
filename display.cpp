@@ -77,6 +77,7 @@ struct CameraSettings
 
 bool is_camera_ready = false;
 
+
 // related to threads
 bool stop_message[MAX_THREADS];
 pthread_t threads[MAX_THREADS];
@@ -116,6 +117,21 @@ void read_settings(void);
 void kill_all_threads();
 void writeCurrentUT(char *buffer);
 
+// utilities
+timespec TimespecDiff(timespec start, timespec end);
+
+
+timespec TimespecDiff(timespec start, timespec end){
+    timespec diff;
+    if ((end.tv_nsec - start.tv_nsec)<0) {
+        diff.tv_sec = end.tv_sec - start.tv_sec-1;
+        diff.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
+    } else {
+        diff.tv_sec = end.tv_sec - start.tv_sec;
+        diff.tv_nsec = end.tv_nsec - start.tv_nsec;
+    }
+    return diff;
+}
 
 void writeCurrentUT(char *buffer)
 {
@@ -263,8 +279,7 @@ void *CameraThread( void * threadargs)
 
     while(!stop_message[tid])
     {
-        if (!cameraReady)
-        {
+        if (!cameraReady){
             strcpy( message, "Searching for Camera.");
             printf("%s\n", message);
 
@@ -283,8 +298,7 @@ void *CameraThread( void * threadargs)
 
                 // Display information about all found interface
                 // For each interface, display information about all devices.
-                for( PvUInt32 x = 0; x < lInterfaceCount; x++ )
-                {
+                for( PvUInt32 x = 0; x < lInterfaceCount; x++ ){
                     // get pointer to each of interface
                     PvInterface * lInterface = lSystem.GetInterface( x );
 
@@ -311,8 +325,7 @@ void *CameraThread( void * threadargs)
                 }
 
                 // If no device is selected, abort
-                if( lDeviceCount == 0 )
-                {
+                if( lDeviceCount == 0 ){
                     sprintf(message, "No Camera Found.\n" );
                     printf("%s\n", message);
                     cameraReady = false;
@@ -322,13 +335,12 @@ void *CameraThread( void * threadargs)
                     sprintf(message, "Connecting to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
                     printf("%s\n", message);
                     //sprintf(serial_number, lDeviceInfo->GetSerialNumber().GetAscii());
-                    if ( !lDevice.Connect( lDeviceInfo ).IsOK() )
-                    {
+                    if ( !lDevice.Connect( lDeviceInfo ).IsOK() ){
                         printf( "Unable to connect to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
                         cameraReady = false;
                         sleep(SLEEP_CAMERA_CONNECT);
                     } else {
-                        sprintf(message, "Successfully connected to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
+                        sprintf(message, "Successfully connected to %s %s\n", lDeviceInfo->GetMACAddress().GetAscii(), lDeviceInfo->GetSerialNumber().GetAscii() );
                         printf("%s\n", message);
 
                         // Get device parameters need to control streaming
@@ -425,8 +437,7 @@ void *CameraThread( void * threadargs)
 
             if ( lResult.IsOK() )
             {
-                if ( lOperationResult.IsOK() )
-                {
+                if ( lOperationResult.IsOK() ){
                     //
                     // We now have a valid buffer. This is where you would typically process the buffer.
                     // -----------------------------------------------------------------------------------------
@@ -462,11 +473,9 @@ void *CameraThread( void * threadargs)
                             // start thread to save the image.
                             Thread_data tdata;
                             start_thread(ImageSaveThread, &tdata);
-                            }
                         }
                         frameCount++;
                     }
-
                     printf( "%c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s\r",
                            lDoodle[ lDoodleIndex ],
                            lBuffer->GetBlockID(),
@@ -474,9 +483,9 @@ void *CameraThread( void * threadargs)
                            lHeight,
                            lFrameRateVal,
                            lBandwidthVal / 1000000.0 );
-                }
                 // We have an image - do some processing (...) and VERY IMPORTANT,
                 // release the buffer back to the pipeline
+                }
                 lPipeline->ReleaseBuffer( lBuffer );
             }
             else
@@ -670,7 +679,7 @@ void keyboard (unsigned char key, int x, int y) {
         printf("Quitting and cleaning up.\n");
         glutLeaveGameMode(); //set the resolution how it was
         kill_all_threads();
-        pthread_mutex_destroy(&CameraThread);
+        pthread_mutex_destroy(&mutexStartThread);
         pthread_exit(NULL);
         sleep(SLEEP_KILL);
         exit(0); //quit the program
@@ -705,27 +714,27 @@ void read_settings(void) {
     file_ptr = fopen("/home/schriste/SAAS/program_settings.txt"  , "r");
     if( file_ptr != NULL){
         printf("Reading program settings...");
-        while (EOF != fscanf(fp, "%s %d", varname, &val)){
-            printf("%d: %s %d\n", count, varname, val);
+        while (EOF != fscanf(file_ptr, "%s %d", varname, &value)){
+            printf("%d: %s %d\n", count, varname, value);
             switch (count) {
                 case 0:
-                    settings.exposure = val;
+                    settings.exposure = value;
                     printf("Exposure is set to %d", settings.exposure);
                     break;
                 case 1:
-                    settings.analogGain = val;
+                    settings.analogGain = value;
                     printf("analogGain is set to %d", settings.analogGain);
                     break;
                 case 2:
-                    settings.preampGain = val;
+                    settings.preampGain = value;
                     printf("preampGain is set to %d", settings.preampGain);
                     break;
                 case 3:
-                    settings.blackLevel = val;
+                    settings.blackLevel = value;
                     printf("blackLevel is set to %d", settings.blackLevel);
                     break;
                 case 4:
-                    isSavingImages = val;
+                    isSavingImages = value;
                     printf("isSavingImages is set to %d", isSavingImages);
                 default:
                     break;
@@ -749,6 +758,7 @@ void *ImageSaveThread(void *threadargs)
     long tid = (long)((struct Thread_data *)threadargs)->thread_id;
     struct Thread_data *my_data;
     my_data = (struct Thread_data *) threadargs;
+    int camera_id = my_data->camera_id;
 
     clock_gettime(CLOCK_MONOTONIC, &preSave);
 
@@ -776,7 +786,7 @@ void *ImageSaveThread(void *threadargs)
 
     clock_gettime(CLOCK_MONOTONIC, &postSave);
     elapsedSave = TimespecDiff(preSave, postSave);
-    printf("Saving took: %d s %d ns\n", elapsedSave.tv_sec, elapsedSave.tv_nsec)
+    printf("Saving took: %ld sec %ld nsec\n", elapsedSave.tv_sec, elapsedSave.tv_nsec);
 
     started[tid] = false;
     pthread_exit(NULL);
@@ -815,7 +825,7 @@ int main (int argc, char **argv) {
     printf("Quitting and cleaning up.\n");
     /* wait for threads to finish */
     kill_all_threads();
-    pthread_mutex_destroy(&CameraThread);
+    pthread_mutex_destroy(&mutexStartThread);
     pthread_exit(NULL);
     return 0;
 }
