@@ -1,0 +1,5 @@
+exposure 10000
+analogGain 400
+preampGain -3
+blackLevel 0
+save_images 0
