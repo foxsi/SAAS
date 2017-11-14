@@ -1,8 +1,10 @@
 #define SAVE_IMAGES false // true to continuously save images
 #define SAVE_LOCATION1 "/mnt/SAAS/images/" //Save locations for FITS files
 #define MOD_SAVE 30
+#define TIMESTAMP_LENGTH       19
 
-#define MAX_THREADS            5
+#define MAX_THREADS            10
+#define MAX_SAVE_THREADS       4
 #define SLEEP_CAMERA_CONNECT   1    // waits for errors while connecting to camera
 #define SLEEP_KILL             2    // waits when killing all threads
 #define DEFAULT_CALIB_CENTER_X       648    // the default calibrated screen center for HUD display
@@ -60,6 +62,9 @@ unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
 unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
 
 bool isSavingImages = SAVE_IMAGES;
+unsigned int max_save_threads = MAX_SAVE_THREADS;
+unsigned int save_threads_count = 0;
+unsigned int mod_save = MOD_SAVE;
 
 // file pointer
 FILE *file_ptr = NULL;
@@ -145,11 +150,15 @@ timespec TimespecDiff(timespec start, timespec end){
 
 void writeCurrentUT(char *buffer)
 {
-    time_t now;
-    time(&now);
+    struct timeval tv;
     struct tm *now_tm;
-    now_tm = gmtime(&now);
-    strftime(buffer,14,"%y%m%d_%H%M%S",now_tm);
+
+    gettimeofday(&tv, NULL);    // Get seconds and microseconds
+    now_tm = gmtime(&tv.tv_sec);
+
+    sprintf(buffer, "%04d%02d%02d_%02d%02d%02d_%03d", now_tm->tm_year+1900, now_tm->tm_mon+1,
+            now_tm->tm_mday, now_tm->tm_hour, now_tm->tm_min, now_tm->tm_sec, (int)(tv.tv_usec/1000));
+
 }
 
 static int current_time(void)
@@ -472,7 +481,7 @@ void *CameraThread( void * threadargs)
 
                         // Get the camera temperature - this may slow down image aquisition...
                         long long int lTempValue = -512;
-                        char timestamp[14];
+                        char timestamp[TIMESTAMP_LENGTH];
                         writeCurrentUT(timestamp);
 
                         lDevice.GetGenParameters()->GetIntegerValue( "GetTemperature", lTempValue );
@@ -480,7 +489,7 @@ void *CameraThread( void * threadargs)
                         camera_temperature = (float)lTempValue / 4.;
                         sprintf(message, "%s - Aquiring: %5.1f C", timestamp, camera_temperature );
 
-                        if (frameCount % MOD_SAVE == 0){
+                        if (frameCount % mod_save == 0 && save_threads_count < max_save_threads){
                             // start thread to save the image.
                             Thread_data tdata;
                             start_thread(ImageSaveThread, &tdata);
@@ -550,6 +559,11 @@ void sig_handler(int signum)
 
 void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 {
+    if (*(*routine) == ImageSaveThread) {
+        printf("Incrementing save_threads_count.\n");
+        save_threads_count++;
+    }
+
     pthread_mutex_lock(&mutexStartThread);
 
     int i = 0;
@@ -575,6 +589,11 @@ void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 
     pthread_attr_destroy(&attr);
     pthread_mutex_unlock(&mutexStartThread);
+
+    if (*(*routine) == ImageSaveThread) {
+        printf("Decrementing save_threads_count.\n");
+        save_threads_count--; 
+    }
 
     return;
 }
@@ -747,6 +766,18 @@ void read_settings(void) {
                 case 4:
                     isSavingImages = value;
                     printf("isSavingImages is set to %d\n", isSavingImages);
+                    break;
+                case 5:
+                    if (value > MAX_SAVE_THREADS) {
+                       printf("User-defined max save threads (%d) > ", value);
+                       printf("max allowed number of save threads (%d).  ", MAX_SAVE_THREADS);
+                       printf("Setting max_save_threads to (%d)\n", MAX_SAVE_THREADS);
+                    } else {
+                        max_save_threads = value;
+                    }
+                    break;
+                case 6:
+                    mod_save = value;
                 default:
                     break;
             }
@@ -756,13 +787,12 @@ void read_settings(void) {
         printf("Can't open input file program_settings.txt!\n");
         printf("Default camera settings are (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
     }
-    fclose(file_ptr);
 }
 
 void *ImageSaveThread(void *threadargs)
 {
     char filename[128];
-    char timestamp[14];
+    char timestamp[TIMESTAMP_LENGTH];
     timespec localCaptureTime;
     timespec preSave, postSave, elapsedSave;
     HeaderData localHeader;
