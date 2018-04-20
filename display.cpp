@@ -777,7 +777,12 @@ void read_settings(void) {
                     }
                     break;
                 case 6:
+		  if (value < 2) {
+		    printf("mod_save must be > 1.  Setting to 2.");
+		    mod_save = 2;
+		  } else {
                     mod_save = value;
+		  }
                 default:
                     break;
             }
