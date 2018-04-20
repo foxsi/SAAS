@@ -777,7 +777,12 @@ void read_settings(void) {
                     }
                     break;
                 case 6:
+		  if (value < 2) {
+		    printf("mod_save must be > 1.  Setting to 2.");
+		    mod_save = 2;
+		  } else {
                     mod_save = value;
+		  }
                 default:
                     break;
             }
@@ -787,6 +792,7 @@ void read_settings(void) {
         printf("Can't open input file program_settings.txt!\n");
         printf("Default camera settings are (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
     }
+    fclose(file_ptr);
 }
 
 void *ImageSaveThread(void *threadargs)
