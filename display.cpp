@@ -396,6 +396,7 @@ void *CameraThread( void * threadargs)
                         // set camera settings
                         PvResult outcome;
                         lDeviceParams->SetBooleanValue("ProgFrameTimeEnable", false);
+                        outcome = lDeviceParams->SetEnumValue("ExposureMode", "Timed");
                         outcome = lDeviceParams->SetIntegerValue("ExposureTimeRaw", settings.exposure);
                         outcome = lDeviceParams->SetIntegerValue("GainRaw", settings.analogGain);
 
