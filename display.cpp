@@ -396,6 +396,7 @@ void *CameraThread( void * threadargs)
                         // set camera settings
                         PvResult outcome;
                         lDeviceParams->SetBooleanValue("ProgFrameTimeEnable", false);
+                        outcome = lDeviceParams->SetEnumValue("ExposureMode", "Timed");
                         outcome = lDeviceParams->SetIntegerValue("ExposureTimeRaw", settings.exposure);
                         outcome = lDeviceParams->SetIntegerValue("GainRaw", settings.analogGain);
 
@@ -787,6 +788,7 @@ void read_settings(void) {
         printf("Can't open input file program_settings.txt!\n");
         printf("Default camera settings are (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
     }
+    fclose(file_ptr);
 }
 
 void *ImageSaveThread(void *threadargs)
