@@ -706,8 +706,10 @@ void gl_reshape (int w, int h) {
 void keyboard (unsigned char key, int x, int y) {
     if (key=='q')
     {
-        // quite the program
+        // Quit the program.
         printf("Quitting and cleaning up.\n");
+        fflush(print_file_ptr);
+        fclose(print_file_ptr);
         glutLeaveGameMode(); //set the resolution how it was
         kill_all_threads();
         pthread_mutex_destroy(&mutexStartThread);
