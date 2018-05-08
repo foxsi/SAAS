@@ -2,6 +2,7 @@
 #define SAVE_LOCATION1 "/mnt/SAAS/images/" //Save locations for FITS files
 #define MOD_SAVE 30
 #define TIMESTAMP_LENGTH       19
+#define PRINT_TO_FILE true // Default for whether print statements are sent to screen or file.
 
 #define MAX_THREADS            10
 #define MAX_SAVE_THREADS       4
@@ -66,8 +67,8 @@ unsigned int max_save_threads = MAX_SAVE_THREADS;
 unsigned int save_threads_count = 0;
 unsigned int mod_save = MOD_SAVE;
 
-// file pointer
-FILE *file_ptr = NULL;
+FILE* file_ptr = NULL; // Pointer for general files.
+static FILE* print_file_ptr = NULL; // Pointer to where print statements should be sent.
 
 char message[100] = "Starting Up";
 int cameraID = 0;
@@ -189,8 +190,7 @@ void framerate(void){
     if (t - t0 >= 5.0) {
         GLfloat seconds = t - t0;
         GLfloat fps = frames / seconds;
-        printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
-               fps);
+        fprintf(print_file_ptr, "%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds, fps);
         t0 = t;
         frames = 0;
     }
@@ -837,6 +837,18 @@ void *ImageSaveThread(void *threadargs)
 }
 
 int main (int argc, char **argv) {
+    // Set where print statements should sent: screen or file.
+    if (PRINT_TO_FILE == false) {
+      print_file_ptr = stdout;
+    } else {
+      char print_filename[128];
+      char timestamp[TIMESTAMP_LENGTH];
+      writeCurrentUT(timestamp);
+      sprintf(print_filename, "FOXSI_SAAS_print_output_%s.txt", timestamp);
+      print_filename[128 - 1] = '\0';
+      print_file_ptr = fopen(print_filename, "w");
+    }
+
     // to catch a Ctrl-C or termination signal and clean up
     signal(SIGINT, &sig_handler);
     signal(SIGTERM, &sig_handler);
