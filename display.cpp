@@ -261,7 +261,7 @@ void kill_all_threads()
     sleep(SLEEP_KILL);
     for(int i = 0; i < MAX_THREADS; i++ ){
         if (started[i]) {
-            printf("Quitting thread %i, quitting status is %i\n", i, pthread_cancel(threads[i]));
+            fprintf(print_file_ptr, "Quitting thread %i, quitting status is %i\n", i, pthread_cancel(threads[i]));
             started[i] = false;
         }
     }
@@ -271,7 +271,7 @@ void *CameraThread( void * threadargs)
 {
     // camera_id refers to 0 PYAS, 1 is RAS (if valid)
     long tid = (long)((struct Thread_data *)threadargs)->thread_id;
-    printf("Camera thread #%ld!\n", tid);
+    fprintf(print_file_ptr, "Camera thread #%ld!\n", tid);
 
     //timespec frameRate = {0,FRAME_CADENCE*1000};
     bool cameraReady = false;
@@ -300,7 +300,7 @@ void *CameraThread( void * threadargs)
     {
         if (!cameraReady){
             strcpy( message, "Searching for Camera.");
-            printf("%s\n", message);
+            fprintf(print_file_ptr, "%s\n", message);
 
             // Find all GEV Devices on the network.
             lSystem.SetDetectionTimeout( 2000 );
@@ -308,7 +308,7 @@ void *CameraThread( void * threadargs)
             if( !lResult.IsOK() )
             {
                 sprintf(message, "PvSystem::Find Error: %s", lResult.GetCodeString().GetAscii() );
-                printf("%s\n", message);
+                fprintf(print_file_ptr, "%s\n", message);
                 cameraReady = false;
                 sleep(SLEEP_CAMERA_CONNECT);
             } else {
@@ -326,7 +326,7 @@ void *CameraThread( void * threadargs)
                            lInterface->GetMACAddress().GetAscii(),
                            lInterface->GetIPAddress().GetAscii(),
                            lInterface->GetSubnetMask().GetAscii() );
-                    printf("%s\n", message);
+                    fprintf(print_file_ptr, "%s\n", message);
 
                     // Get the number of GEV devices that were found using GetDeviceCount.
                     lDeviceCount = lInterface->GetDeviceCount();
@@ -339,7 +339,7 @@ void *CameraThread( void * threadargs)
                                lDeviceInfo->GetMACAddress().GetAscii(),
                                lDeviceInfo->GetIPAddress().GetAscii(),
                                lDeviceInfo->GetSerialNumber().GetAscii() );
-                        printf("%s\n", message);
+                        fprintf(print_file_ptr, "%s\n", message);
                         cameraID = atoi(lDeviceInfo->GetSerialNumber().GetAscii());
                     }
                 }
@@ -347,21 +347,21 @@ void *CameraThread( void * threadargs)
                 // If no device is selected, abort
                 if( lDeviceCount == 0 ){
                     sprintf(message, "No Camera Found.\n" );
-                    printf("%s\n", message);
+                    fprintf(print_file_ptr, "%s\n", message);
                     cameraReady = false;
                     sleep(SLEEP_CAMERA_CONNECT);
                 } else {
                     // Connect to the GEV Device
                     sprintf(message, "Connecting to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
-                    printf("%s\n", message);
+                    fprintf(print_file_ptr, "%s\n", message);
                     //sprintf(serial_number, lDeviceInfo->GetSerialNumber().GetAscii());
                     if ( !lDevice.Connect( lDeviceInfo ).IsOK() ){
-                        printf( "Unable to connect to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
+                        fprintf(print_file_ptr, "Unable to connect to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
                         cameraReady = false;
                         sleep(SLEEP_CAMERA_CONNECT);
                     } else {
                         sprintf(message, "Successfully connected to %s %s\n", lDeviceInfo->GetMACAddress().GetAscii(), lDeviceInfo->GetSerialNumber().GetAscii() );
-                        printf("%s\n", message);
+                        fprintf(print_file_ptr, "%s\n", message);
 
                         // Get device parameters need to control streaming
                         lDeviceParams = lDevice.GetGenParameters();
@@ -371,7 +371,7 @@ void *CameraThread( void * threadargs)
 
                         // Open stream - have the PvDevice do it for us
                         sprintf(message, "Opening stream to device\n" );
-                        printf("%s\n", message);
+                        fprintf(print_file_ptr, "%s\n", message);
                         lStream.Open( lDeviceInfo->GetIPAddress() );
 
                         // Create the PvPipeline object
@@ -391,7 +391,7 @@ void *CameraThread( void * threadargs)
                         // IMPORTANT: the pipeline needs to be "armed", or started before
                         // we instruct the device to send us images
                         sprintf(message, "Starting pipeline\n" );
-                        printf("%s\n", message);
+                        fprintf(print_file_ptr, "%s\n", message);
 
                         // set camera settings
                         PvResult outcome;
@@ -434,13 +434,13 @@ void *CameraThread( void * threadargs)
                         lDeviceParams->SetIntegerValue( "TLParamsLocked", 1 );
 
                         sprintf(message, "Resetting timestamp counter...\n" );
-                        printf("%s\n", message);
+                        fprintf(print_file_ptr, "%s\n", message);
                         lDeviceParams->ExecuteCommand( "GevTimestampControlReset" );
 
                         // The pipeline is already "armed", we just have to tell the device
                         // to start sending us images
                         sprintf(message, "Sending StartAcquisition command to device\n" );
-                        printf("%s\n", message);
+                        fprintf(print_file_ptr, "%s\n", message);
                         lDeviceParams->ExecuteCommand( "AcquisitionStart" );
 
                         cameraReady = true;
@@ -497,7 +497,7 @@ void *CameraThread( void * threadargs)
                         }
                         frameCount++;
                     }
-                    printf( "\n %c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s\r",
+                    fprintf(print_file_ptr, "\n %c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s\r",
                            lDoodle[ lDoodleIndex ],
                            lBuffer->GetBlockID(),
                            lWidth,
@@ -512,7 +512,7 @@ void *CameraThread( void * threadargs)
             else
             {
                 // Timeout
-                printf( "%c Timeout\r", lDoodle[ lDoodleIndex ] );
+                fprintf(print_file_ptr, "%c Timeout\r", lDoodle[ lDoodleIndex ] );
             }
         }
     }
@@ -520,10 +520,10 @@ void *CameraThread( void * threadargs)
     delete lPipeline;
     lPipeline = NULL;
 
-    printf("CameraStream thread #%ld exiting\n", tid);
+    fprintf(print_file_ptr, "CameraStream thread #%ld exiting\n", tid);
     // clean up the camera
     // Tell the device to stop sending images
-    printf( "Sending AcquisitionStop command to the device\n" );
+    fprintf(print_file_ptr, "Sending AcquisitionStop command to the device\n" );
     lDeviceParams->ExecuteCommand( "AcquisitionStop" );
 
     // If present reset TLParamsLocked to 0. Must be done AFTER the
@@ -532,15 +532,15 @@ void *CameraThread( void * threadargs)
 
     // We stop the pipeline - letting the object lapse out of
     // scope would have had the destructor do the same, but we do it anyway
-    printf( "Stop pipeline\n" );
+    fprintf(print_file_ptr, "Stop pipeline\n" );
     lPipeline->Stop();
 
     // Now close the stream. Also optionnal but nice to have
-    printf( "Closing stream\n" );
+    fprintf(print_file_ptr, "Closing stream\n" );
     lStream.Close();
 
     // Finally disconnect the device. Optional, still nice to have
-    printf( "Disconnecting device\n" );
+    fprintf(print_file_ptr, "Disconnecting device\n" );
     lDevice.Disconnect();
 
     cameraReady = false;
@@ -561,7 +561,7 @@ void sig_handler(int signum)
 void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 {
     if (*(*routine) == ImageSaveThread) {
-        printf("Incrementing save_threads_count.\n");
+        fprintf(print_file_ptr, "Incrementing save_threads_count.\n");
         save_threads_count++;
     }
 
@@ -585,14 +585,14 @@ void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 
     int rc = pthread_create(&threads[i], &attr, routine, &thread_data[i]);
     if (rc != 0) {
-        printf("ERROR; return code from pthread_create() is %d\n", rc);
+        fprintf(print_file_ptr, "ERROR; return code from pthread_create() is %d\n", rc);
     } else started[i] = true;
 
     pthread_attr_destroy(&attr);
     pthread_mutex_unlock(&mutexStartThread);
 
     if (*(*routine) == ImageSaveThread) {
-        printf("Decrementing save_threads_count.\n");
+        fprintf(print_file_ptr, "Decrementing save_threads_count.\n");
         save_threads_count--; 
     }
 
@@ -707,7 +707,7 @@ void keyboard (unsigned char key, int x, int y) {
     if (key=='q')
     {
         // Quit the program.
-        printf("Quitting and cleaning up.\n");
+        fprintf(print_file_ptr, "\n\nQuitting and cleaning up.\n");
         fflush(print_file_ptr);
         fclose(print_file_ptr);
         glutLeaveGameMode(); //set the resolution how it was
@@ -732,10 +732,10 @@ void keyboard (unsigned char key, int x, int y) {
 void read_calibrated_ccd_center(void) {
     file_ptr = fopen("/home/schriste/SAAS/calibrated_ccd_center.txt", "r");
     if (file_ptr == NULL) {
-        printf("Can't open input file calibrated_ccd_center.txt!\n");
+        fprintf(print_file_ptr, "Can't open input file calibrated_ccd_center.txt!\n");
     } else {
         fscanf(file_ptr, "%u %u", &calib_center_x, &calib_center_y);
-        printf("Found center to be (%u,%u)\n", calib_center_x, calib_center_y);
+        fprintf(print_file_ptr, "Found center to be (%u,%u)\n", calib_center_x, calib_center_y);
         fclose(file_ptr);
     }
 }
@@ -746,35 +746,35 @@ void read_settings(void) {
     int value;
     file_ptr = fopen("/home/schriste/SAAS/program_settings.txt"  , "r");
     if( file_ptr != NULL){
-        printf("Reading program settings...\n");
+        fprintf(print_file_ptr, "Reading program settings...\n");
         while (EOF != fscanf(file_ptr, "%s %d", varname, &value)){
-            printf("%d: %s %d\n", count, varname, value);
+            fprintf(print_file_ptr, "%d: %s %d\n", count, varname, value);
             switch (count) {
                 case 0:
                     settings.exposure = value;
-                    printf("Exposure is set to %d\n", settings.exposure);
+                    fprintf(print_file_ptr, "Exposure is set to %d\n", settings.exposure);
                     break;
                 case 1:
                     settings.analogGain = value;
-                    printf("analogGain is set to %d\n", settings.analogGain);
+                    fprintf(print_file_ptr, "analogGain is set to %d\n", settings.analogGain);
                     break;
                 case 2:
                     settings.preampGain = value;
-                    printf("preampGain is set to %d\n", settings.preampGain);
+                    fprintf(print_file_ptr, "preampGain is set to %d\n", settings.preampGain);
                     break;
                 case 3:
                     settings.blackLevel = value;
-                    printf("blackLevel is set to %d\n", settings.blackLevel);
+                    fprintf(print_file_ptr, "blackLevel is set to %d\n", settings.blackLevel);
                     break;
                 case 4:
                     isSavingImages = value;
-                    printf("isSavingImages is set to %d\n", isSavingImages);
+                    fprintf(print_file_ptr, "isSavingImages is set to %d\n", isSavingImages);
                     break;
                 case 5:
                     if (value > MAX_SAVE_THREADS) {
-                       printf("User-defined max save threads (%d) > ", value);
-                       printf("max allowed number of save threads (%d).  ", MAX_SAVE_THREADS);
-                       printf("Setting max_save_threads to (%d)\n", MAX_SAVE_THREADS);
+                       fprintf(print_file_ptr, "User-defined max save threads (%d) > ", value);
+                       fprintf(print_file_ptr, "max allowed number of save threads (%d).  ", MAX_SAVE_THREADS);
+                       fprintf(print_file_ptr, "Setting max_save_threads to (%d)\n", MAX_SAVE_THREADS);
                     } else {
                         max_save_threads = value;
                     }
@@ -787,8 +787,8 @@ void read_settings(void) {
             count++;
         }
     } else {
-        printf("Can't open input file program_settings.txt!\n");
-        printf("Default camera settings are (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
+        fprintf(print_file_ptr, "Can't open input file program_settings.txt!\n");
+        fprintf(print_file_ptr, "Default camera settings are (%" SCNu16 " %" SCNu16 " %" SCNd16 " %i)\n", settings.exposure, settings.analogGain, settings.preampGain, settings.blackLevel);
     }
     fclose(file_ptr);
 }
@@ -832,7 +832,7 @@ void *ImageSaveThread(void *threadargs)
 
     clock_gettime(CLOCK_MONOTONIC, &postSave);
     elapsedSave = TimespecDiff(preSave, postSave);
-    printf("Saving took: %ld sec %ld nsec \n", elapsedSave.tv_sec, elapsedSave.tv_nsec);
+    fprintf(print_file_ptr, "Saving took: %ld sec %ld nsec \n", elapsedSave.tv_sec, elapsedSave.tv_nsec);
 
     started[tid] = false;
     pthread_exit(NULL);
@@ -857,7 +857,7 @@ int main (int argc, char **argv) {
 
     pthread_mutex_init(&mutexStartThread, NULL);
     /* Create worker threads */
-    printf("In main: creating threads\n");
+    fprintf(print_file_ptr, "In main: creating threads\n");
 
     for(int i = 0; i < MAX_THREADS; i++ ){
         started[0] = false;
@@ -880,7 +880,7 @@ int main (int argc, char **argv) {
     glutMainLoop (); //call the main loop
 
     /* Last thing that main() should do */
-    printf("Quitting and cleaning up.\n");
+    fprintf(print_file_ptr, "Quitting and cleaning up.\n");
     /* wait for threads to finish */
     kill_all_threads();
     pthread_mutex_destroy(&mutexStartThread);
