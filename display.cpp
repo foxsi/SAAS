@@ -497,13 +497,18 @@ void *CameraThread( void * threadargs)
                         }
                         frameCount++;
                     }
-                    fprintf(print_file_ptr, "\n %c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s\r",
-                           lDoodle[ lDoodleIndex ],
-                           lBuffer->GetBlockID(),
-                           lWidth,
-                           lHeight,
-                           lFrameRateVal,
-                           lBandwidthVal / 1000000.0 );
+                    char block_message[255];
+                    char timestamp[TIMESTAMP_LENGTH];
+                    writeCurrentUT(timestamp);
+                    sprintf(block_message, "\n %c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s at %s\r\n",
+                            lDoodle[ lDoodleIndex ],
+                            lBuffer->GetBlockID(),
+                            lWidth,
+                            lHeight,
+                            lFrameRateVal,
+                            lBandwidthVal / 1000000.0,
+                            timestamp);
+                    fprintf(print_file_ptr, block_message);
                 // We have an image - do some processing (...) and VERY IMPORTANT,
                 // release the buffer back to the pipeline
                 }
@@ -849,6 +854,7 @@ int main (int argc, char **argv) {
       sprintf(print_filename, "FOXSI_SAAS_print_output_%s.txt", timestamp);
       print_filename[128 - 1] = '\0';
       print_file_ptr = fopen(print_filename, "w");
+      fprintf(print_file_ptr, "Created print statement file, %s, at %s", print_filename, timestamp);
     }
 
     // to catch a Ctrl-C or termination signal and clean up
