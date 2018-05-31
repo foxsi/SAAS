@@ -566,7 +566,9 @@ void sig_handler(int signum)
 void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 {
     if (*(*routine) == ImageSaveThread) {
-        fprintf(print_file_ptr, "Incrementing save_threads_count.\n");
+        char thread_message[100];
+        sprintf(thread_message, "Incrementing save_threads_count.  Was %u.  Now %u\n", save_threads_count, save_threads_count+1);
+        fprintf(print_file_ptr, "%s", thread_message);
         save_threads_count++;
     }
 
@@ -597,7 +599,8 @@ void start_thread(void *(*routine) (void *), const Thread_data *tdata)
     pthread_mutex_unlock(&mutexStartThread);
 
     if (*(*routine) == ImageSaveThread) {
-        fprintf(print_file_ptr, "Decrementing save_threads_count.\n");
+        sprintf(thread_message, "Decrementing save_threads_count. Was %u.  Now %u.\n", save_threads_count, save_threads_count-1);
+        fprintf(print_file_ptr, "%s", thread_message);
         save_threads_count--; 
     }
 
