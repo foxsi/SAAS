@@ -868,7 +868,7 @@ int main (int argc, char **argv) {
     fprintf(print_file_ptr, "In main: creating threads\n");
 
     for(int i = 0; i < MAX_THREADS; i++ ){
-        started[0] = false;
+        started[i] = false;
     }
 
     read_calibrated_ccd_center();
