@@ -285,6 +285,7 @@ void *CameraThread( void * threadargs)
     PvInt64 lImageCountVal = 0;
     double lFrameRateVal = 0.0;
     double lBandwidthVal = 0.0;
+    char thread_message[100];
 
     PvSystem lSystem;
     PvDeviceInfo* lDeviceInfo;
@@ -491,9 +492,20 @@ void *CameraThread( void * threadargs)
                         sprintf(message, "%s - Aquiring: %5.1f C", timestamp, camera_temperature );
 
                         if (frameCount % mod_save == 0 && save_threads_count < max_save_threads){
+                            // Increment save threads counter.
+                            save_threads_count++;
+                            sprintf(thread_message, "Incrementing save_threads_count.  Was %u.  Now %u\n",
+                                save_threads_count-1, save_threads_count);
+                            fprintf(print_file_ptr, "%s", thread_message);
+
                             // start thread to save the image.
                             Thread_data tdata;
                             start_thread(ImageSaveThread, &tdata);
+
+                            // Decrement save threads counter;
+                            save_threads_count--;
+                            sprintf(thread_message, "Decrementing save_threads_count. Was %u.  Now %u.\n", save_threads_count+1, save_threads_count);
+                            fprintf(print_file_ptr, "%s", thread_message);
                         }
                         frameCount++;
                     }
@@ -565,13 +577,6 @@ void sig_handler(int signum)
 
 void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 {
-    if (*(*routine) == ImageSaveThread) {
-        char thread_message[100];
-        sprintf(thread_message, "Incrementing save_threads_count.  Was %u.  Now %u\n", save_threads_count, save_threads_count+1);
-        fprintf(print_file_ptr, "%s", thread_message);
-        save_threads_count++;
-    }
-
     pthread_mutex_lock(&mutexStartThread);
 
     int i = 0;
@@ -597,12 +602,6 @@ void start_thread(void *(*routine) (void *), const Thread_data *tdata)
 
     pthread_attr_destroy(&attr);
     pthread_mutex_unlock(&mutexStartThread);
-
-    if (*(*routine) == ImageSaveThread) {
-        sprintf(thread_message, "Decrementing save_threads_count. Was %u.  Now %u.\n", save_threads_count, save_threads_count-1);
-        fprintf(print_file_ptr, "%s", thread_message);
-        save_threads_count--; 
-    }
 
     return;
 }
