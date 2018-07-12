@@ -1,7 +1,7 @@
-exposure 10000
+exposure 5000
 analogGain 400
 preampGain -3
 blackLevel 0
 save_images 1
-max_save_threads 2
-mod_save 1
+max_save_threads 4
+mod_save 6
