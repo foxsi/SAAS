@@ -54,7 +54,7 @@
 // width and height of IMPERX Camera frame
 static float width = NUM_XPIXELS;
 static float height = NUM_YPIXELS;
-static float arcsec_to_pixel = 3.1;   // the plate scale
+static float arcsec_to_pixel = 3.47;   // the plate scale
 long int frameCount = 0;
 long int saveCount = 0;  // counter for the number of images saved to disk
 float camera_temperature = 0.0;
