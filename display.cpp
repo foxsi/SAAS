@@ -653,8 +653,8 @@ void gl_display (void) {
 
     // X - line
 	glBegin(GL_LINES);
-    glVertex2f(0.0f, calib_center_y);
-    glVertex2f(width, calib_center_y);
+    glVertex2f(0.0f, NUM_YPIXELS - calib_center_y);
+    glVertex2f(width, NUM_YPIXELS - calib_center_y);
     glEnd();
 
     // Y - line
@@ -665,11 +665,11 @@ void gl_display (void) {
 
     // Sun is 32 arcminutes across (radius of 16 arcminutes)
     // half a Sun
-    gl_draw_circle(calib_center_x, calib_center_y, 8*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 8*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     // full Sun
-    gl_draw_circle(calib_center_x, calib_center_y, 16*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 16*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
     // 1.5 Sun
-    gl_draw_circle(calib_center_x, calib_center_y, 24*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
+    gl_draw_circle(calib_center_x, NUM_YPIXELS - calib_center_y, 24*60 / arcsec_to_pixel, NUM_CIRCLE_SEGMENTS);
 
     for (int i = 0; i < 48; i++) {
         glBegin(GL_LINES);
@@ -687,11 +687,11 @@ void gl_display (void) {
     for (int i = 0; i < 48; i++) {
         glBegin(GL_LINES);
         if (i < 24) {
-            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, calib_center_y - 10);
-            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, calib_center_y + 10);
+            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y - 10);
+            glVertex2f(calib_center_x + i * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y + 10);
         } else {
-            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, calib_center_y - 10);
-            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, calib_center_y + 10);
+            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y - 10);
+            glVertex2f(calib_center_x + (24 - i) * 60 / arcsec_to_pixel, NUM_YPIXELS - calib_center_y + 10);
         }
         glEnd();
     }
