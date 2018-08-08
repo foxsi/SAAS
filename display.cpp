@@ -489,7 +489,7 @@ void *CameraThread( void * threadargs)
                         lDevice.GetGenParameters()->GetIntegerValue( "GetTemperature", lTempValue );
                         if (lTempValue >= 512) lTempValue = lTempValue - 1024;
                         camera_temperature = (float)lTempValue / 4.;
-                        sprintf(message, "%s - Aquiring: %5.1f C", timestamp, camera_temperature );
+                        sprintf(message, "%s - Acquiring: %5.1f C", timestamp, camera_temperature );
 
                         if (frameCount % mod_save == 0 && save_threads_count < max_save_threads){
                             // Increment save threads counter.
