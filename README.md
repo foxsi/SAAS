@@ -1,5 +1,7 @@
-SAAS Forked to Write for RaspberryPi 5
+SAAS Forked to Work with RaspberryPi 5
 ====
+
+eBUS v6.4.0, ARM processor
 
 Code to control the FOXSI Solar Aspect and Alignment System.
 
