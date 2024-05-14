@@ -265,8 +265,6 @@ void kill_all_threads()
     for(int i = 0; i < MAX_THREADS; i++ ){
         // not sure if this is needed
         // pthread_join(threads[i],nullptr);
-        std::cout<<"KILL"<<std::ends;
-        std::cout.flush();
         if (started[i]) {
             fprintf(print_file_ptr, "Quitting thread %i, quitting status is %i\n", i, pthread_cancel(threads[i]));
             started[i] = false;
@@ -594,8 +592,6 @@ void *CameraThread( void * threadargs)
         lPipeline->Stop();
     }
     delete lPipeline;
-    std::cout<<"STOP"<<std::ends;
-    std::cout.flush();
     lPipeline = NULL;
 
     fprintf(print_file_ptr, "CameraStream thread #%ld exiting\n", tid);
@@ -774,19 +770,15 @@ void keyboard (unsigned char key, int x, int y) {
     if (key=='q')
     {
         glutLeaveGameMode(); //set the resolution how it was
-        std::cout<<"TEST"<<std::ends;
-        std::cout.flush();
+
         kill_all_threads();
         pthread_mutex_destroy(&mutexStartThread);
-        std::cout<<"TEST"<<std::ends;
-        std::cout.flush();
+
         // THIS IS NOT THE RIGHT PLACE FOR THREAD_EXIT, it's ALREADY CALLED IN THE CameraTHREAD function
         // std::cout<<"TESTEXIT"<<std::ends;
         // std::cout.flush();
         // pthread_exit(NULL);
         sleep(SLEEP_KILL);
-        std::cout<<"TESTLAST"<<std::ends;
-        std::cout.flush();
 
         // Quit the program.
         fprintf(print_file_ptr, "\n\nQuitting and cleaning up.\n");
