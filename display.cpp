@@ -403,7 +403,7 @@ void *CameraThread( void * threadargs)
                     sleep(SLEEP_CAMERA_CONNECT);
                 } else {
                     // Connect to the GEV Device
-                    sprintf(message, "Connecting to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
+                    sprintf(message, "Connecting to %s\n", lDeviceInfo->GetIPAddress().GetAscii() );
                     fprintf(print_file_ptr, "%s\n", message);
                     //sprintf(serial_number, lDeviceInfo->GetSerialNumber().GetAscii());
                     if ( !lDevice.Connect( lDeviceInfo ).IsOK() ){
@@ -411,7 +411,7 @@ void *CameraThread( void * threadargs)
                         cameraReady = false;
                         sleep(SLEEP_CAMERA_CONNECT);
                     } else {
-                        sprintf(message, "Successfully connected to %s %s\n", lDeviceInfo->GetMACAddress().GetAscii(), lDeviceInfo->GetSerialNumber().GetAscii() );
+                        sprintf(message, "Successfully connected to %s %s\n", lDeviceInfo->GetIPAddress().GetAscii(), lDeviceInfo->GetSerialNumber().GetAscii() );
                         fprintf(print_file_ptr, "%s\n", message);
 
                         // Get device parameters need to control streaming
@@ -579,6 +579,7 @@ void *CameraThread( void * threadargs)
             else
             {
                 // Timeout
+                sprintf(message, "Unable to connect to the device: Error Code %d\n", lResult.GetInternalCode() );
                 fprintf(print_file_ptr, "%c Timeout\r", lDoodle[ lDoodleIndex ] );
             }
         }
