@@ -13,6 +13,7 @@ Keyboard input
 `q` - quit the program
 `s` - enable or disable saving image to a FITS file
 `arrowkeys` - move crosshair
+`+/-` - change exposure (to be added)
 
 Input Files
 -----------
