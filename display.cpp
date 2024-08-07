@@ -43,11 +43,13 @@
 #include <PvPipeline.h>
 #include <PvBuffer.h>
 #include <PvStream.h>
-#include <PvStreamRaw.h>
+//#include <PvStreamRaw.h> does not exist in eBUS 4.0+
 #include <PvSystem.h>
 #include <PvInterface.h>
 #include <PvDevice.h>
 
+#include <PvDeviceGEV.h>
+#include <PvStreamGEV.h>
 //#include <opencv.hpp>
 
 // global declarations
@@ -71,6 +73,7 @@ FILE* file_ptr = NULL; // Pointer for general files.
 static FILE* print_file_ptr = NULL; // Pointer to where print statements should be sent.
 
 char message[100] = "Starting Up";
+char centerCoords[100]; // string to save the coordinates of the center
 int cameraID = 0;
 
 // to store the image
@@ -95,6 +98,7 @@ bool is_camera_ready = false;
 
 
 // related to threads
+// global so initialized as false
 bool stop_message[MAX_THREADS];
 pthread_t threads[MAX_THREADS];
 bool started[MAX_THREADS];
@@ -126,6 +130,7 @@ void gl_reshape (int w, int h);
 void gl_switchToOrtho (void);
 
 void keyboard (unsigned char key, int x, int y);
+void moveCenter (int key, int x, int y);
 void *CameraThread( void * threadargs, int camera_id);
 void *ImageSaveThread(void *threadargs);
 void read_calibrated_ccd_center(void);
@@ -260,6 +265,8 @@ void kill_all_threads()
     }
     sleep(SLEEP_KILL);
     for(int i = 0; i < MAX_THREADS; i++ ){
+        // not sure if this is needed
+        // pthread_join(threads[i],nullptr);
         if (started[i]) {
             fprintf(print_file_ptr, "Quitting thread %i, quitting status is %i\n", i, pthread_cancel(threads[i]));
             started[i] = false;
@@ -282,20 +289,20 @@ void *CameraThread( void * threadargs)
 
     char lDoodle[] = "|\\-|-/";
     int lDoodleIndex = 0;
-    PvInt64 lImageCountVal = 0;
+    int64_t lImageCountVal = 0;
     double lFrameRateVal = 0.0;
     double lBandwidthVal = 0.0;
     char thread_message[100];
 
     PvSystem lSystem;
-    PvDeviceInfo* lDeviceInfo;
+    const PvDeviceInfoGEV* lDeviceInfo;
     PvResult lResult;
-    PvDevice lDevice;
-    PvStream lStream;
-    PvPipeline *lPipeline;
+    PvDeviceGEV lDevice;
+    PvStreamGEV lStream;
+    PvPipeline *lPipeline = nullptr;
     PvGenParameterArray *lStreamParams;
-    PvGenParameterArray *lDeviceParams;
-    PvUInt32 lDeviceCount;
+    PvGenParameterArray *lDeviceParams = nullptr;
+    uint32_t lDeviceCount;
 
     while(!stop_message[tid])
     {
@@ -314,46 +321,91 @@ void *CameraThread( void * threadargs)
                 sleep(SLEEP_CAMERA_CONNECT);
             } else {
                 // Get the number of GEV Interfaces that were found using GetInterfaceCount.
-                PvUInt32 lInterfaceCount = lSystem.GetInterfaceCount();
+                uint32_t lInterfaceCount = lSystem.GetInterfaceCount();
 
                 // Display information about all found interface
                 // For each interface, display information about all devices.
-                for( PvUInt32 x = 0; x < lInterfaceCount; x++ ){
+                for( uint32_t x = 0; x < lInterfaceCount; x++ ){
                     // get pointer to each of interface
-                    PvInterface * lInterface = lSystem.GetInterface( x );
-
-                    sprintf(message, "Interface %i\nMAC Address: %s\nIP Address: %s\nSubnet Mask: %s\n\n",
-                           x,
-                           lInterface->GetMACAddress().GetAscii(),
-                           lInterface->GetIPAddress().GetAscii(),
-                           lInterface->GetSubnetMask().GetAscii() );
-                    fprintf(print_file_ptr, "%s\n", message);
-
+                    const PvInterface * lInterface = (lSystem.GetInterface( x ));
                     // Get the number of GEV devices that were found using GetDeviceCount.
                     lDeviceCount = lInterface->GetDeviceCount();
 
-                    for( PvUInt32 y = 0; y < lDeviceCount ; y++ )
-                    {
-                        lDeviceInfo = lInterface->GetDeviceInfo( y );
-                        sprintf(message, "Device %i\nMAC Address: %s\nIP Address: %s\nSerial number: %s\n",
-                               y,
-                               lDeviceInfo->GetMACAddress().GetAscii(),
-                               lDeviceInfo->GetIPAddress().GetAscii(),
-                               lDeviceInfo->GetSerialNumber().GetAscii() );
-                        fprintf(print_file_ptr, "%s\n", message);
-                        cameraID = atoi(lDeviceInfo->GetSerialNumber().GetAscii());
+                    if (lInterface->GetType() == 1){
+
+                        const PvNetworkAdapter * lNetwork = dynamic_cast<const PvNetworkAdapter *>(lSystem.GetInterface( x ));
+
+                        if( lDeviceCount == 0 )
+                        {
+                            sprintf(message, "No devices on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
+                            lNetwork->GetName().GetAscii(),
+                            lNetwork->GetMACAddress().GetAscii(),
+                            lNetwork->GetIPAddress( x ).GetAscii(),
+                            lNetwork->GetSubnetMask( x ).GetAscii() );
+
+                            fprintf(print_file_ptr, "%s\n", message);
+                            continue;
+                        } else if( lDeviceCount > 1 )
+                        {
+                            sprintf(message, "Multiple devices on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
+                            lNetwork->GetName().GetAscii(),
+                            lNetwork->GetMACAddress().GetAscii(),
+                            lNetwork->GetIPAddress( x ).GetAscii(),
+                            lNetwork->GetSubnetMask( x ).GetAscii() );
+                            fprintf(print_file_ptr, "%s\n", message);
+                            break;
+                        } else if( lDeviceCount == 1 )
+                        {
+                            lDeviceInfo = dynamic_cast<const PvDeviceInfoGEV*>(lInterface->GetDeviceInfo(0));
+                            sprintf(message, "Device found on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
+                            lNetwork->GetName().GetAscii(),
+                            lNetwork->GetMACAddress().GetAscii(),
+                            lNetwork->GetIPAddress( x ).GetAscii(),
+                            lNetwork->GetSubnetMask( x ).GetAscii() );
+                            fprintf(print_file_ptr, "%s\n", message);
+                            break;
+                        }
                     }
+                    else if (lInterface->GetType() == 0){
+
+                        if( lDeviceCount == 0 )
+                        {
+                            sprintf(message, "No devices connected to %s Interface %i\n\n",
+                            lInterface->GetName().GetAscii(),
+                            x );
+                            fprintf(print_file_ptr, "%s\n", message);
+                            continue;
+                        } else if( lDeviceCount > 1 )
+                        {
+                            sprintf(message, "Multiple devices connected to %s Interface %i\n\n",
+                            lInterface->GetName().GetAscii(),
+                            x );
+                            fprintf(print_file_ptr, "%s\n", message);
+                            break;
+                        } else if( lDeviceCount == 1 )
+                        {
+                            lDeviceInfo = dynamic_cast<const PvDeviceInfoGEV*>(lInterface->GetDeviceInfo(0));
+                            sprintf(message, "Device found on %s Interface %i \n\n",
+                            lInterface->GetName().GetAscii(),
+                            x );
+                            fprintf(print_file_ptr, "%s\n", message);
+                            break;
+                        }
+                    }
+                    
                 }
 
-                // If no device is selected, abort
-                if( lDeviceCount == 0 ){
-                    sprintf(message, "No Camera Found.\n" );
+
+
+                // If no device is selected, or multiple are found, abort
+                if( lDeviceCount != 1 ){
+                    lDeviceCount == 0 ? sprintf(message, "No Camera Found.\n" ) : sprintf(message, "Multiple Cameras Found, Unsure How to Proceed.\n" );
                     fprintf(print_file_ptr, "%s\n", message);
                     cameraReady = false;
                     sleep(SLEEP_CAMERA_CONNECT);
                 } else {
                     // Connect to the GEV Device
-                    sprintf(message, "Connecting to %s\n", lDeviceInfo->GetMACAddress().GetAscii() );
+                    sprintf(message, "Connecting to %s\n", lDeviceInfo->GetIPAddress().GetAscii() );
                     fprintf(print_file_ptr, "%s\n", message);
                     //sprintf(serial_number, lDeviceInfo->GetSerialNumber().GetAscii());
                     if ( !lDevice.Connect( lDeviceInfo ).IsOK() ){
@@ -361,11 +413,11 @@ void *CameraThread( void * threadargs)
                         cameraReady = false;
                         sleep(SLEEP_CAMERA_CONNECT);
                     } else {
-                        sprintf(message, "Successfully connected to %s %s\n", lDeviceInfo->GetMACAddress().GetAscii(), lDeviceInfo->GetSerialNumber().GetAscii() );
+                        sprintf(message, "Successfully connected to %s %s\n", lDeviceInfo->GetIPAddress().GetAscii(), lDeviceInfo->GetSerialNumber().GetAscii() );
                         fprintf(print_file_ptr, "%s\n", message);
 
                         // Get device parameters need to control streaming
-                        lDeviceParams = lDevice.GetGenParameters();
+                        lDeviceParams = lDevice.GetParameters();
 
                         // Negotiate streaming packet size
                         lDevice.NegotiatePacketSize();
@@ -379,11 +431,11 @@ void *CameraThread( void * threadargs)
                         lPipeline = new PvPipeline( &lStream );
 
                         // Reading payload size from device
-                        PvInt64 lSize = 0;
+                        int64_t lSize = 0;
                         lDeviceParams->GetIntegerValue( "PayloadSize", lSize );
 
                         // Set the Buffer size and the Buffer count
-                        lPipeline->SetBufferSize( static_cast<PvUInt32>( lSize ) );
+                        lPipeline->SetBufferSize( static_cast<uint32_t>( lSize ) );
                         lPipeline->SetBufferCount( 16 ); // Increase for high frame rate without missing block IDs
 
                         // Have to set the Device IP destination to the Stream
@@ -470,7 +522,7 @@ void *CameraThread( void * threadargs)
                     lStreamParams->GetFloatValue( "BandwidthAverage", lBandwidthVal );
 
                     // If the buffer contains an image, display width and height
-                    PvUInt32 lWidth = 0, lHeight = 0;
+                    uint32_t lWidth = 0, lHeight = 0;
                     if ( lBuffer->GetPayloadType() == PvPayloadTypeImage )
                     {
                         // Get image specific buffer interface
@@ -482,14 +534,19 @@ void *CameraThread( void * threadargs)
                         data = lImage->GetDataPointer();
 
                         // Get the camera temperature - this may slow down image aquisition...
-                        long long int lTempValue = -512;
+                        int64_t lTempValue = -512;
                         char timestamp[TIMESTAMP_LENGTH];
-                        writeCurrentUT(timestamp);
+                        if(isSavingImages){
+                            writeCurrentUT(timestamp);
 
-                        lDevice.GetGenParameters()->GetIntegerValue( "GetTemperature", lTempValue );
-                        if (lTempValue >= 512) lTempValue = lTempValue - 1024;
-                        camera_temperature = (float)lTempValue / 4.;
-                        sprintf(message, "%s - Acquiring: %5.1f C", timestamp, camera_temperature );
+                            lDevice.GetParameters()->GetIntegerValue( "GetTemperature", lTempValue );
+                            if (lTempValue >= 512) lTempValue = lTempValue - 1024;
+                            camera_temperature = (float)lTempValue / 4.;
+                            sprintf(message, "%s - Acquiring: %5.1f C", timestamp, camera_temperature );
+                        }
+                        else{
+                            sprintf(message, "Saving Disabled. Seeing Live Feed.");
+                        }
 
                         if (frameCount % mod_save == 0 && save_threads_count < max_save_threads){
                             // Increment save threads counter.
@@ -500,7 +557,9 @@ void *CameraThread( void * threadargs)
 
                             // start thread to save the image.
                             Thread_data tdata;
-                            start_thread(ImageSaveThread, &tdata);
+                            if(isSavingImages){
+                                start_thread(ImageSaveThread, &tdata);
+                            }
 
                             // Decrement save threads counter;
                             save_threads_count--;
@@ -512,7 +571,7 @@ void *CameraThread( void * threadargs)
                     char block_message[255];
                     char timestamp[TIMESTAMP_LENGTH];
                     writeCurrentUT(timestamp);
-                    sprintf(block_message, "\n %c BlockID: %016llX W: %i H: %i %.01f FPS %.01f Mb/s at %s\r\n",
+                    sprintf(block_message, "\n %c BlockID: %016lX W: %i H: %i %.01f FPS %.01f Mb/s at %s\r\n",
                             lDoodle[ lDoodleIndex ],
                             lBuffer->GetBlockID(),
                             lWidth,
@@ -529,11 +588,19 @@ void *CameraThread( void * threadargs)
             else
             {
                 // Timeout
+                sprintf(message, "Unable to connect to the device: Error Code %d\n", lResult.GetInternalCode() );
                 fprintf(print_file_ptr, "%c Timeout\r", lDoodle[ lDoodleIndex ] );
             }
         }
     }
 
+    // We stop the pipeline - letting the object lapse out of
+    // scope would have had the destructor do the same, but we do it anyway
+    fprintf(print_file_ptr, "Stop pipeline\n" );
+    if (lPipeline != nullptr)
+    {
+        lPipeline->Stop();
+    }
     delete lPipeline;
     lPipeline = NULL;
 
@@ -541,17 +608,16 @@ void *CameraThread( void * threadargs)
     // clean up the camera
     // Tell the device to stop sending images
     fprintf(print_file_ptr, "Sending AcquisitionStop command to the device\n" );
-    lDeviceParams->ExecuteCommand( "AcquisitionStop" );
+    if ( lDeviceParams != nullptr )
+    {
+        lDeviceParams->ExecuteCommand( "AcquisitionStop" );
 
-    // If present reset TLParamsLocked to 0. Must be done AFTER the
-    // streaming has been stopped
-    lDeviceParams->SetIntegerValue( "TLParamsLocked", 0 );
-
-    // We stop the pipeline - letting the object lapse out of
-    // scope would have had the destructor do the same, but we do it anyway
-    fprintf(print_file_ptr, "Stop pipeline\n" );
-    lPipeline->Stop();
-
+        // If present reset TLParamsLocked to 0. Must be done AFTER the
+        // streaming has been stopped
+        lDeviceParams->SetIntegerValue( "TLParamsLocked", 0 );
+    }
+    
+    
     // Now close the stream. Also optionnal but nice to have
     fprintf(print_file_ptr, "Closing stream\n" );
     lStream.Close();
@@ -650,6 +716,7 @@ void gl_display (void) {
 	glColor4f(1, 1, 1, 1);
     // draw the message string
 	gl_draw_string(100, 100, message);
+    gl_draw_string(100, 900, centerCoords);
 
     // X - line
 	glBegin(GL_LINES);
@@ -711,17 +778,25 @@ void gl_reshape (int w, int h) {
 }
 
 void keyboard (unsigned char key, int x, int y) {
+    
     if (key=='q')
     {
+        glutLeaveGameMode(); //set the resolution how it was
+
+        kill_all_threads();
+        pthread_mutex_destroy(&mutexStartThread);
+
+        // THIS IS NOT THE RIGHT PLACE FOR THREAD_EXIT, it's ALREADY CALLED IN THE CameraTHREAD function
+        // std::cout<<"TESTEXIT"<<std::ends;
+        // std::cout.flush();
+        // pthread_exit(NULL);
+        sleep(SLEEP_KILL);
+
         // Quit the program.
         fprintf(print_file_ptr, "\n\nQuitting and cleaning up.\n");
         fflush(print_file_ptr);
         fclose(print_file_ptr);
-        glutLeaveGameMode(); //set the resolution how it was
-        kill_all_threads();
-        pthread_mutex_destroy(&mutexStartThread);
-        pthread_exit(NULL);
-        sleep(SLEEP_KILL);
+
         exit(0); //quit the program
     }
     if (key=='s')
@@ -729,15 +804,36 @@ void keyboard (unsigned char key, int x, int y) {
         // if images are currently saving automatically disable this functionality
         if (!isSavingImages){
             Thread_data tdata;
+            sprintf(message, "Manual Saving Enabled.");
             start_thread(ImageSaveThread, &tdata);
+            isSavingImages = true;
         } else {
             sprintf(message, "Manual Saving Disabled.");
+            isSavingImages = false;
         }
     }
 }
 
+void moveCenter (int key, int x, int y) {
+    switch(key){
+        case GLUT_KEY_UP:
+            calib_center_y-=1;
+            break;
+        case GLUT_KEY_DOWN:
+            calib_center_y+=1;
+            break;
+        case GLUT_KEY_LEFT:
+            calib_center_x-=1;
+            break;
+        case GLUT_KEY_RIGHT:
+            calib_center_x+=1;
+            break;
+    }
+    sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
+}
+
 void read_calibrated_ccd_center(void) {
-    file_ptr = fopen("/home/schriste/SAAS/calibrated_ccd_center.txt", "r");
+    file_ptr = fopen("./calibrated_ccd_center.txt", "r");
     if (file_ptr == NULL) {
         fprintf(print_file_ptr, "Can't open input file calibrated_ccd_center.txt!\n");
     } else {
@@ -751,7 +847,7 @@ void read_settings(void) {
     int count = 0;
     char varname[128];
     int value;
-    file_ptr = fopen("/home/schriste/SAAS/program_settings.txt"  , "r");
+    file_ptr = fopen("./program_settings.txt"  , "r");
     if( file_ptr != NULL){
         fprintf(print_file_ptr, "Reading program settings...\n");
         while (EOF != fscanf(file_ptr, "%s %d", varname, &value)){
@@ -833,6 +929,8 @@ void *ImageSaveThread(void *threadargs)
     localHeader.analogGain = (float)settings.analogGain;
     localHeader.plateScale = arcsec_to_pixel;
     localHeader.cameraTemperature = camera_temperature;
+    localHeader.cross_x = calib_center_x;
+    localHeader.cross_y = calib_center_y;
 
     writeFITSImage(data_save, localHeader, filename, NUM_XPIXELS, NUM_YPIXELS);
     saveCount++;
@@ -846,6 +944,7 @@ void *ImageSaveThread(void *threadargs)
 }
 
 int main (int argc, char **argv) {
+    sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
     // Set where print statements should sent: screen or file.
     if (PRINT_TO_FILE == false) {
       print_file_ptr = stdout;
@@ -879,12 +978,15 @@ int main (int argc, char **argv) {
 
     glutInit (&argc, argv);
     glutInitDisplayMode (GLUT_DOUBLE | GLUT_DEPTH); //set the display to Double buffer, with depth
-    glutEnterGameMode(); //set glut to fullscreen using the settings in the line above
+    // glutEnterGameMode(); //set glut to fullscreen using the settings in the line above
+    glutCreateWindow("GAMER MODE");
+    glutFullScreen();
     gl_init(); // initialize the openGL window
     glutDisplayFunc (gl_display); //use the display function to draw everything
     glutIdleFunc (gl_display); //update any variables in display
     glutReshapeFunc (gl_reshape); //reshape the window accordingly
     glutKeyboardFunc (keyboard); //check the keyboard
+    glutSpecialFunc (moveCenter); //move center
     glutMainLoop (); //call the main loop
 
     /* Last thing that main() should do */

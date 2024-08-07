@@ -5,7 +5,7 @@
 #include <PvPipeline.h>
 #include <PvBuffer.h>
 #include <PvStream.h>
-#include <PvStreamRaw.h>
+//#include <PvStreamRaw.h>
 
 #include <string>
 #include <opencv.hpp>
