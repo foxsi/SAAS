@@ -3,6 +3,7 @@
 #define MOD_SAVE 30
 #define TIMESTAMP_LENGTH       19
 #define PRINT_TO_FILE true // Default for whether print statements are sent to screen or file.
+#define FLIGHT_MODE false // if in flight mode, disable ability to change exposure and crosshair, force saving
 
 #define MAX_THREADS            10
 #define MAX_SAVE_THREADS       4
@@ -65,6 +66,7 @@ unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
 unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
 
 bool isSavingImages = SAVE_IMAGES;
+bool flightMode = FLIGHT_MODE;
 unsigned int max_save_threads = MAX_SAVE_THREADS;
 unsigned int save_threads_count = 0;
 unsigned int mod_save = MOD_SAVE;
@@ -74,6 +76,7 @@ static FILE* print_file_ptr = NULL; // Pointer to where print statements should 
 
 char message[100] = "Starting Up";
 char centerCoords[100]; // string to save the coordinates of the center
+char exposureTimeStr[100];
 int cameraID = 0;
 
 // to store the image
@@ -516,7 +519,7 @@ void *CameraThread( void * threadargs)
                     // We now have a valid buffer. This is where you would typically process the buffer.
                     // -----------------------------------------------------------------------------------------
                     // ...
-
+                    lDeviceParams->SetIntegerValue("ExposureTimeRaw", settings.exposure);
                     lStreamParams->GetIntegerValue( "ImagesCount", lImageCountVal );
                     lStreamParams->GetFloatValue( "AcquisitionRateAverage", lFrameRateVal );
                     lStreamParams->GetFloatValue( "BandwidthAverage", lBandwidthVal );
@@ -716,7 +719,10 @@ void gl_display (void) {
 	glColor4f(1, 1, 1, 1);
     // draw the message string
 	gl_draw_string(100, 100, message);
-    gl_draw_string(100, 900, centerCoords);
+    if (!flightMode){
+        gl_draw_string(100, 900, centerCoords);
+        gl_draw_string(1200, 900, exposureTimeStr);
+    }
 
     // X - line
 	glBegin(GL_LINES);
@@ -799,17 +805,29 @@ void keyboard (unsigned char key, int x, int y) {
 
         exit(0); //quit the program
     }
-    if (key=='s')
-    {
-        // if images are currently saving automatically disable this functionality
-        if (!isSavingImages){
-            Thread_data tdata;
-            sprintf(message, "Manual Saving Enabled.");
-            start_thread(ImageSaveThread, &tdata);
-            isSavingImages = true;
-        } else {
-            sprintf(message, "Manual Saving Disabled.");
-            isSavingImages = false;
+    if (!flightMode){
+        if (key=='s')
+        {
+            // if images are currently saving automatically disable this functionality
+            if (!isSavingImages){
+                Thread_data tdata;
+                sprintf(message, "Manual Saving Enabled.");
+                start_thread(ImageSaveThread, &tdata);
+                isSavingImages = true;
+            } else {
+                sprintf(message, "Manual Saving Disabled.");
+                isSavingImages = false;
+            }
+        }
+        if (key=='=')
+        {
+            settings.exposure += 1000;
+            sprintf(exposureTimeStr, "%d", settings.exposure);
+        }
+        if (key=='-')
+        {
+            settings.exposure -= 1000;
+            sprintf(exposureTimeStr, "%d", settings.exposure);
         }
     }
 }
@@ -945,6 +963,7 @@ void *ImageSaveThread(void *threadargs)
 
 int main (int argc, char **argv) {
     sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
+    sprintf(exposureTimeStr, "%d", settings.exposure);
     // Set where print statements should sent: screen or file.
     if (PRINT_TO_FILE == false) {
       print_file_ptr = stdout;
@@ -986,7 +1005,9 @@ int main (int argc, char **argv) {
     glutIdleFunc (gl_display); //update any variables in display
     glutReshapeFunc (gl_reshape); //reshape the window accordingly
     glutKeyboardFunc (keyboard); //check the keyboard
-    glutSpecialFunc (moveCenter); //move center
+    if (!flightMode){
+        glutSpecialFunc (moveCenter); //move center
+    }
     glutMainLoop (); //call the main loop
 
     /* Last thing that main() should do */

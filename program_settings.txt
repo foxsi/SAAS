@@ -1,4 +1,4 @@
-exposure 5000
+exposure 10000
 analogGain 400
 preampGain -3
 blackLevel 0
