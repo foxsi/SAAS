@@ -73,6 +73,7 @@ FILE* file_ptr = NULL; // Pointer for general files.
 static FILE* print_file_ptr = NULL; // Pointer to where print statements should be sent.
 
 char message[100] = "Starting Up";
+char centerCoords[100]; // string to save the coordinates of the center
 int cameraID = 0;
 
 // to store the image
@@ -129,6 +130,7 @@ void gl_reshape (int w, int h);
 void gl_switchToOrtho (void);
 
 void keyboard (unsigned char key, int x, int y);
+void moveCenter (int key, int x, int y);
 void *CameraThread( void * threadargs, int camera_id);
 void *ImageSaveThread(void *threadargs);
 void read_calibrated_ccd_center(void);
@@ -534,12 +536,17 @@ void *CameraThread( void * threadargs)
                         // Get the camera temperature - this may slow down image aquisition...
                         int64_t lTempValue = -512;
                         char timestamp[TIMESTAMP_LENGTH];
-                        writeCurrentUT(timestamp);
+                        if(isSavingImages){
+                            writeCurrentUT(timestamp);
 
-                        lDevice.GetParameters()->GetIntegerValue( "GetTemperature", lTempValue );
-                        if (lTempValue >= 512) lTempValue = lTempValue - 1024;
-                        camera_temperature = (float)lTempValue / 4.;
-                        sprintf(message, "%s - Acquiring: %5.1f C", timestamp, camera_temperature );
+                            lDevice.GetParameters()->GetIntegerValue( "GetTemperature", lTempValue );
+                            if (lTempValue >= 512) lTempValue = lTempValue - 1024;
+                            camera_temperature = (float)lTempValue / 4.;
+                            sprintf(message, "%s - Acquiring: %5.1f C", timestamp, camera_temperature );
+                        }
+                        else{
+                            sprintf(message, "Saving Disabled. Seeing Live Feed.");
+                        }
 
                         if (frameCount % mod_save == 0 && save_threads_count < max_save_threads){
                             // Increment save threads counter.
@@ -550,7 +557,9 @@ void *CameraThread( void * threadargs)
 
                             // start thread to save the image.
                             Thread_data tdata;
-                            start_thread(ImageSaveThread, &tdata);
+                            if(isSavingImages){
+                                start_thread(ImageSaveThread, &tdata);
+                            }
 
                             // Decrement save threads counter;
                             save_threads_count--;
@@ -707,6 +716,7 @@ void gl_display (void) {
 	glColor4f(1, 1, 1, 1);
     // draw the message string
 	gl_draw_string(100, 100, message);
+    gl_draw_string(100, 900, centerCoords);
 
     // X - line
 	glBegin(GL_LINES);
@@ -768,6 +778,7 @@ void gl_reshape (int w, int h) {
 }
 
 void keyboard (unsigned char key, int x, int y) {
+    
     if (key=='q')
     {
         glutLeaveGameMode(); //set the resolution how it was
@@ -793,15 +804,36 @@ void keyboard (unsigned char key, int x, int y) {
         // if images are currently saving automatically disable this functionality
         if (!isSavingImages){
             Thread_data tdata;
+            sprintf(message, "Manual Saving Enabled.");
             start_thread(ImageSaveThread, &tdata);
+            isSavingImages = true;
         } else {
             sprintf(message, "Manual Saving Disabled.");
+            isSavingImages = false;
         }
     }
 }
 
+void moveCenter (int key, int x, int y) {
+    switch(key){
+        case GLUT_KEY_UP:
+            calib_center_y-=1;
+            break;
+        case GLUT_KEY_DOWN:
+            calib_center_y+=1;
+            break;
+        case GLUT_KEY_LEFT:
+            calib_center_x-=1;
+            break;
+        case GLUT_KEY_RIGHT:
+            calib_center_x+=1;
+            break;
+    }
+    sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
+}
+
 void read_calibrated_ccd_center(void) {
-    file_ptr = fopen("/home/schriste/SAAS/calibrated_ccd_center.txt", "r");
+    file_ptr = fopen("./calibrated_ccd_center.txt", "r");
     if (file_ptr == NULL) {
         fprintf(print_file_ptr, "Can't open input file calibrated_ccd_center.txt!\n");
     } else {
@@ -897,6 +929,8 @@ void *ImageSaveThread(void *threadargs)
     localHeader.analogGain = (float)settings.analogGain;
     localHeader.plateScale = arcsec_to_pixel;
     localHeader.cameraTemperature = camera_temperature;
+    localHeader.cross_x = calib_center_x;
+    localHeader.cross_y = calib_center_y;
 
     writeFITSImage(data_save, localHeader, filename, NUM_XPIXELS, NUM_YPIXELS);
     saveCount++;
@@ -910,6 +944,7 @@ void *ImageSaveThread(void *threadargs)
 }
 
 int main (int argc, char **argv) {
+    sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
     // Set where print statements should sent: screen or file.
     if (PRINT_TO_FILE == false) {
       print_file_ptr = stdout;
@@ -951,6 +986,7 @@ int main (int argc, char **argv) {
     glutIdleFunc (gl_display); //update any variables in display
     glutReshapeFunc (gl_reshape); //reshape the window accordingly
     glutKeyboardFunc (keyboard); //check the keyboard
+    glutSpecialFunc (moveCenter); //move center
     glutMainLoop (); //call the main loop
 
     /* Last thing that main() should do */

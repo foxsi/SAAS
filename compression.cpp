@@ -104,6 +104,8 @@ int writeFITSImage(unsigned char *data, HeaderData keys, const std::string fileN
     pFits->pHDU().addKey("GAIN_PRE", (float)keys.preampGain, "Preamp gain of CCD");
     pFits->pHDU().addKey("GAIN_ANA", (int)keys.analogGain, "Analog gain of CCD");
     pFits->pHDU().addKey("FRAMENUM", (long)keys.frameCount, "Frame number");
+    pFits->pHDU().addKey("CROSSHAIR_X", (int)keys.cross_x, "Crosshair x coordinate");
+    pFits->pHDU().addKey("CROSSHAIR_Y", (int)keys.cross_y, "Crosshair y coordinate");
     
 
     try{
