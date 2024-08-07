@@ -14,8 +14,6 @@ struct HeaderData
     int analogGain;
     int imageMinMax[2];
     float plateScale;
-    int cross_x;
-    int cross_y;
 };
 
 int writeFITSImage(unsigned char *data, HeaderData keys, const std::string fileName, int width, int height);

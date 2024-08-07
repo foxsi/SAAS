@@ -9,7 +9,7 @@
 #include <PvPipeline.h>
 #include <PvBuffer.h>
 #include <PvStream.h>
-//#include <PvStreamRaw.h>
+#include <PvStreamRaw.h>
 #include <PvSystem.h>
 #include <PvInterface.h>
 #include <PvDevice.h>
@@ -45,11 +45,11 @@ bool AcquireImages()
     }
 
     // Get the number of GEV Interfaces that were found using GetInterfaceCount.
-    uint32_t lInterfaceCount = lSystem.GetInterfaceCount();
+    PvUInt32 lInterfaceCount = lSystem.GetInterfaceCount();
 
     // Display information about all found interface
     // For each interface, display information about all devices.
-    for( uint32_t x = 0; x < lInterfaceCount; x++ )
+    for( PvUInt32 x = 0; x < lInterfaceCount; x++ )
     {
         // get pointer to each of interface
         PvInterface * lInterface = lSystem.GetInterface( x );
@@ -61,9 +61,9 @@ bool AcquireImages()
                 lInterface->GetSubnetMask().GetAscii() );
 
         // Get the number of GEV devices that were found using GetDeviceCount.
-        uint32_t lDeviceCount = lInterface->GetDeviceCount();
+        PvUInt32 lDeviceCount = lInterface->GetDeviceCount();
 
-        for( uint32_t y = 0; y < lDeviceCount ; y++ )
+        for( PvUInt32 y = 0; y < lDeviceCount ; y++ )
         {
             lDeviceInfo = lInterface->GetDeviceInfo( y );
             printf( "Device %i\nMAC Address: %s\nIP Address: %s\nSerial number: %s\n\n",
@@ -110,11 +110,11 @@ bool AcquireImages()
     PvPipeline lPipeline( &lStream );
     
     // Reading payload size from device
-    int64_t lSize = 0;
+    PvInt64 lSize = 0;
 	lDeviceParams->GetIntegerValue( "PayloadSize", lSize );
 
     // Set the Buffer size and the Buffer count
-    lPipeline.SetBufferSize( static_cast<uint32_t>( lSize ) );
+    lPipeline.SetBufferSize( static_cast<PvUInt32>( lSize ) );
     lPipeline.SetBufferCount( 16 ); // Increase for high frame rate without missing block IDs
 
     // Have to set the Device IP destination to the Stream
@@ -142,7 +142,7 @@ bool AcquireImages()
 
     char lDoodle[] = "|\\-|-/";
     int lDoodleIndex = 0;
-    int64_t lImageCountVal = 0;
+    PvInt64 lImageCountVal = 0;
     double lFrameRateVal = 0.0;
     double lBandwidthVal = 0.0;
 
@@ -169,7 +169,7 @@ bool AcquireImages()
 				lStreamParams->GetFloatValue( "BandwidthAverage", lBandwidthVal );
             
 				// If the buffer contains an image, display width and height
-				uint32_t lWidth = 0, lHeight = 0;
+				PvUInt32 lWidth = 0, lHeight = 0;
 				if ( lBuffer->GetPayloadType() == PvPayloadTypeImage )
 				{
 					// Get image specific buffer interface
