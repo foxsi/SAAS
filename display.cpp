@@ -1,5 +1,5 @@
-#define SAVE_IMAGES false // true to continuously save images
-#define SAVE_LOCATION1 "/mnt/SAAS/images/" //Save locations for FITS files
+#define SAVE_IMAGES true // true to continuously save images
+#define SAVE_LOCATION1 "./images/" //Save locations for FITS files
 #define MOD_SAVE 30
 #define TIMESTAMP_LENGTH       19
 #define PRINT_TO_FILE true // Default for whether print statements are sent to screen or file.
