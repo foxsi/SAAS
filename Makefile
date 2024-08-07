@@ -6,12 +6,12 @@
 CC=g++
 GCC_VERSION_GE_43 := $(shell expr `g++ -dumpversion | cut -f2 -d.` \>= 3)
 
-PUREGEV_ROOT = /opt/jai/ebus_sdk/linux-aarch64-arm
+PUREGEV_ROOT = /opt/pleora/ebus_sdk
 OPENCVDIR = /usr/include/opencv2/
 CCFITSDIR = /usr/include/CCfits/
 INCLUDE = -I$(OPENCVDIR) -I$(PUREGEV_ROOT)/include/ -I$(CCFITSDIR)
 
-CFLAGS = -Wall $(INCLUDE) -Wno-unknown-pragmas -D_UNIX_ -D_LINUX_
+CFLAGS = -Wall $(INCLUDE) -Wno-unknown-pragmas
 ifeq "$(GCC_VERSION_GE_43)" "1"
     CFLAGS += -std=gnu++0x
 endif
@@ -22,10 +22,10 @@ IMPERX =-L$(PUREGEV_ROOT)/lib/		\
 	-lPvBuffer          		\
 	-lPvPersistence      		\
 	-lPvGenICam          		\
-	-lPvStream 					\
-	-lPvSystem
+	-lPvStreamRaw        		\
+	-lPvStream 
 THREAD = -lpthread
-CCFITS = -lCCfits -lcfitsio
+CCFITS = -lCCfits
 X11 = -lX11
 GL = -lGL
 GLU = -lGLU

@@ -31,11 +31,11 @@ int ImperxStream::Connect()
     }
 
     // Get the number of GEV Interfaces that were found using GetInterfaceCount.
-    uint32_t lInterfaceCount = lSystem.GetInterfaceCount();
+    PvUInt32 lInterfaceCount = lSystem.GetInterfaceCount();
 
     // Display information about all found interface
     // For each interface, display information about all devices.
-    for( uint32_t x = 0; x < lInterfaceCount; x++ )
+    for( PvUInt32 x = 0; x < lInterfaceCount; x++ )
     {
         // get pointer to each of interface
         PvInterface * lInterface = lSystem.GetInterface( x );
@@ -47,9 +47,9 @@ int ImperxStream::Connect()
                 lInterface->GetSubnetMask().GetAscii() );
 
         // Get the number of GEV devices that were found using GetDeviceCount.
-        uint32_t lDeviceCount = lInterface->GetDeviceCount();
+        PvUInt32 lDeviceCount = lInterface->GetDeviceCount();
 
-        for( uint32_t y = 0; y < lDeviceCount ; y++ )
+        for( PvUInt32 y = 0; y < lDeviceCount ; y++ )
         {
             lDeviceInfo = lInterface->GetDeviceInfo( y );
             printf( "Device %i\nMAC Address: %s\nIP Address: %s\nSerial number: %s\n\n",
@@ -107,19 +107,19 @@ int ImperxStream::Connect(const std::string &IP)
     }
 
     // Get the number of GEV Interfaces that were found using GetInterfaceCount.
-    uint32_t lInterfaceCount = lSystem.GetInterfaceCount();
+    PvUInt32 lInterfaceCount = lSystem.GetInterfaceCount();
 
     // Search through interfaces for any devices
     // Check devices for correct target IP
-    for( uint32_t x = 0; x < lInterfaceCount; x++ )
+    for( PvUInt32 x = 0; x < lInterfaceCount; x++ )
     {
         // get pointer to each of interface
         PvInterface * lInterface = lSystem.GetInterface( x );
 
         // Get the number of GEV devices that were found using GetDeviceCount.
-        uint32_t lDeviceCount = lInterface->GetDeviceCount();
+        PvUInt32 lDeviceCount = lInterface->GetDeviceCount();
 
-        for( uint32_t y = 0; y < lDeviceCount ; y++ )
+        for( PvUInt32 y = 0; y < lDeviceCount ; y++ )
         {
             PvDeviceInfo *tDeviceInfo = lInterface->GetDeviceInfo( y );
             std::string laddress(tDeviceInfo->GetIPAddress().GetAscii());
@@ -191,12 +191,12 @@ int ImperxStream::Initialize()
     }
 
     // Reading payload size from device
-    int64_t lSize = 0;
+    PvInt64 lSize = 0;
     lDeviceParams->GetIntegerValue( "PayloadSize", lSize );
 
     // Set the Buffer size and the Buffer count
     std::cout << "ImperxStream::Initialize Setting Buffer Size" << std::endl;
-    lPipeline.SetBufferSize( static_cast<uint32_t>( lSize ) );
+    lPipeline.SetBufferSize( static_cast<PvUInt32>( lSize ) );
     lPipeline.SetBufferCount( 16 ); // Increase for high frame rate without missing block IDs
 
     // Have to set the Device IP destination to the Stream
@@ -238,7 +238,7 @@ int ImperxStream::Snap(cv::Mat &frame, int timeout)
     // to start sending us images
     lDeviceParams->ExecuteCommand( "AcquisitionStart" );
     int lWidth, lHeight, result = 0;
-    uint32_t dropCount;
+    PvUInt32 dropCount;
     // Retrieve next buffer             
     PvBuffer *lBuffer = NULL;
     PvResult lOperationResult;
@@ -354,7 +354,7 @@ void ImperxStream::ConfigureSnap()
 int ImperxStream::SetExposure(int exposureTime)
 {
     PvResult outcome;
-    int64_t temp;
+    PvInt64 temp;
     if (exposureTime >= 5 && exposureTime <= 38221)
     {
         lDeviceParams->SetBooleanValue("ProgFrameTimeEnable", false);
@@ -531,7 +531,7 @@ int ImperxStream::SetBlackLevel(int black)
 
 int ImperxStream::GetExposure()
 {
-    int64_t exposure;
+    PvInt64 exposure;
     lDeviceParams->GetIntegerValue("ExposureTimeRaw", exposure);
     return (int) exposure;
 }
@@ -554,42 +554,42 @@ cv::Point ImperxStream::GetROIOffset()
 
 int ImperxStream::GetROIHeight()
 {
-    int64_t height;
+    PvInt64 height;
     lDeviceParams->GetIntegerValue("Height", height);
     return (int) height;
 }
 
 int ImperxStream::GetROIWidth()
 {
-    int64_t width;
+    PvInt64 width;
     lDeviceParams->GetIntegerValue("Width", width);
     return (int) width;
 }
 
 int ImperxStream::GetROIOffsetX()
 {
-    int64_t x;
+    PvInt64 x;
     lDeviceParams->GetIntegerValue("OffsetX", x);
     return (int) x;
 }
 
 int ImperxStream::GetROIOffsetY()
 {
-    int64_t y;
+    PvInt64 y;
     lDeviceParams->GetIntegerValue("OffsetY", y);
     return (int) y;
 }
 
 int ImperxStream::GetAnalogGain()
 {
-    int64_t gain;
+    PvInt64 gain;
     lDeviceParams->GetIntegerValue("GainRaw", gain);
     return (int) gain;
 }
 
 int ImperxStream::GetBlackLevel()
 {
-    int64_t black;
+    PvInt64 black;
     lDeviceParams->GetIntegerValue("BlackLevelRaw", black);
     return (int) black;
 }
@@ -597,7 +597,7 @@ int ImperxStream::GetBlackLevel()
 int ImperxStream::GetPreAmpGain()
 {
     int gain;
-    int64_t name;
+    PvInt64 name;
     lDeviceParams->GetEnumValue("PreAmpRaw", name);
     switch((int) name)
     {
