@@ -1,5 +1,7 @@
-SAAS
+SAAS Branch to Work with RaspberryPi 5
 ====
+
+eBUS v6.4.0, ARM processor
 
 Code to control the FOXSI Solar Aspect and Alignment System.
 
@@ -9,7 +11,8 @@ Options
 -------
 Keyboard input
 `q` - quit the program
-`s` - save the current image to a FITS file
+`s` - enable or disable saving image to a FITS file
+`arrowkeys` - move crosshair
 
 Input Files
 -----------
