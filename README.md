@@ -20,4 +20,7 @@ Input Files
 `calibration_ccd_center.txt` - contains the calibrated center of the CCD.
 `camera_settings.txt` - contains the default camera settings.
 
+Error Codes
+-----------
+30 - Connected to camera, but unable to communicate with it. Turn the camera off and on then run: 
 
