@@ -4,6 +4,7 @@
 #define TIMESTAMP_LENGTH       19
 #define PRINT_TO_FILE true // Default for whether print statements are sent to screen or file.
 #define MODE 1 // 0 - flight mode, 1 - alignment, 2 - heliostat
+#define NORTH_ANGLE 135*(M_PI / 180.0)
 
 #define MAX_THREADS            10
 #define MAX_SAVE_THREADS       4
@@ -752,6 +753,12 @@ void gl_display (void) {
     glBegin(GL_LINES);
     glVertex2f(calib_center_x, 0.0f);
     glVertex2f(calib_center_x, height);
+    glEnd();
+
+    // North Line
+    glBegin(GL_LINES);
+    glVertex2f(calib_center_x, NUM_YPIXELS - calib_center_y);
+    glVertex2f(calib_center_x+ 100*cos(NORTH_ANGLE), NUM_YPIXELS - calib_center_y + 100*sin(NORTH_ANGLE));
     glEnd();
 
     // Sun is 32 arcminutes across (radius of 16 arcminutes)
