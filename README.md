@@ -19,6 +19,8 @@ Keyboard input
 
 `+/-` - change exposure by 1000
 
+`p` - auto-exposure, idea is to automatically change the exposure such that the average of the top x% of pixels is around some value. Not fully implemented
+
 Input Files
 -----------
 `calibration_ccd_center.txt` - contains the calibrated center of the CCD.
