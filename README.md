@@ -27,4 +27,10 @@ Input Files
 Error Codes
 -----------
 30 - Connected to camera, but unable to communicate with it. Turn the camera off and on then run: 
+```
+sudo nmcli connection delete "Wired connection 1"
+sudo nmcli connection add con-name "Wired connection 1" ifname eth0 type ethernet ipv4.method manual ipv4.addresses 192.168.8.8
+sudo nmcli connection delete "Wired connection 1"
+sudo nmcli connection add con-name "Wired connection 1" ifname eth0 type ethernet ipv4.method manual ipv4.addresses 169.254.1.1/16
+```
 
