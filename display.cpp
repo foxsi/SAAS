@@ -756,10 +756,13 @@ void gl_display (void) {
     glEnd();
 
     // North Line
-    glBegin(GL_LINES);
-    glVertex2f(calib_center_x, NUM_YPIXELS - calib_center_y);
-    glVertex2f(calib_center_x+ 100*cos(NORTH_ANGLE), NUM_YPIXELS - calib_center_y + 100*sin(NORTH_ANGLE));
-    glEnd();
+    if(mode==0)
+    {
+        glBegin(GL_LINES);
+        glVertex2f(calib_center_x, NUM_YPIXELS - calib_center_y);
+        glVertex2f(calib_center_x+ 100*cos(NORTH_ANGLE), NUM_YPIXELS - calib_center_y + 100*sin(NORTH_ANGLE));
+        glEnd();
+    }
 
     // Sun is 32 arcminutes across (radius of 16 arcminutes)
     // half a Sun
