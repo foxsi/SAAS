@@ -11,8 +11,6 @@
 #define SLEEP_KILL             2    // waits when killing all threads
 #define DEFAULT_CALIB_CENTER_X       648    // the default calibrated screen center for HUD display
 #define DEFAULT_CALIB_CENTER_Y       483    // the default calibrated screen center for HUD display
-#define DEFAULT_X_MAX               1296    // the default calibrated screen edge for HUD display
-#define DEFAULT_Y_MAX               966    // the default calibrated screen edge for HUD display
 #define NUM_CIRCLE_SEGMENTS   30    // the number of line segments to use for circles
 #define NUM_XPIXELS         1296    // number of X pixels of sensor
 #define NUM_YPIXELS         966     // number of Y pixels of sensor
@@ -34,6 +32,7 @@
 #include <unistd.h>     /* for sleep()  */
 #include <stdint.h>     /* for uint_16 */
 #include <inttypes.h>   /* for fscanf uint types */
+#include <algorithm>
 // openGL libraries
 #include <GL/gl.h>
 #include <GL/glut.h>
@@ -852,6 +851,10 @@ void keyboard (unsigned char key, int x, int y) {
             if (settings.exposure < minExposure){settings.exposure=minExposure;}
             sprintf(exposureTimeStr, "%d", settings.exposure);
         }
+        if (key=='p')
+        {
+            autoExposure();
+        }
     }
 }
 
@@ -863,7 +866,7 @@ void moveCenter (int key, int x, int y) {
             break;
         case GLUT_KEY_DOWN:
             calib_center_y+=1;
-            if (calib_center_y >= DEFAULT_Y_MAX) {calib_center_y=DEFAULT_Y_MAX-1;}
+            if (calib_center_y >= NUM_YPIXELS) {calib_center_y=NUM_YPIXELS-1;}
             break;
         case GLUT_KEY_LEFT:
             calib_center_x-=1;
@@ -871,10 +874,27 @@ void moveCenter (int key, int x, int y) {
             break;
         case GLUT_KEY_RIGHT:
             calib_center_x+=1;
-            if (calib_center_x >= DEFAULT_X_MAX) {calib_center_x=DEFAULT_X_MAX-1;}
+            if (calib_center_x >= NUM_XPIXELS) {calib_center_x=NUM_XPIXELS-1;}
             break;
     }
     sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
+}
+void autoExposure(){
+    // MIGHT BE FASTER TO DO A QUICKSEARCH IF IM ONLY INTERESTED IN THE TOP x% OF VALUES!!!!!!!!!!!!!!!!!
+    std::sort(data, data + (NUM_XPIXELS * NUM_YPIXELS), std::greater<unsigned char>());
+    int topPercentCount = (NUM_XPIXELS * NUM_YPIXELS) * .01;
+
+    // Calculate the average brightness of the top 10% pixels
+    double sum = 0;
+    for (int i = 0; i < topPercentCount; ++i) {
+        sum += data[i];
+    }
+    // settings.exposure
+    int newExposure = 25*settings.exposure/(sum / topPercentCount);
+
+    std::cout<<(newExposure)<<std::ends;
+    std::cout<<"\n"<<std::ends;
+    std::cout.flush();
 }
 
 void read_calibrated_ccd_center(void) {
