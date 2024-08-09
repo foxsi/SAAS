@@ -15,7 +15,7 @@ Keyboard input
 
 `s` - enable or disable saving image to a FITS file
 
-`arrowkeys` - move crosshair
+`arrowkeys` - move crosshair (cross hair freaks out a bit near left and bottom edge)
 
 `+/-` - change exposure by 1000
 

@@ -3,7 +3,7 @@
 #define MOD_SAVE 30
 #define TIMESTAMP_LENGTH       19
 #define PRINT_TO_FILE true // Default for whether print statements are sent to screen or file.
-#define FLIGHT_MODE false // if in flight mode, disable ability to change exposure and crosshair, force saving
+#define MODE 1 // 0 - flight mode, 1 - alignment, 2 - heliostat
 
 #define MAX_THREADS            10
 #define MAX_SAVE_THREADS       4
@@ -11,6 +11,8 @@
 #define SLEEP_KILL             2    // waits when killing all threads
 #define DEFAULT_CALIB_CENTER_X       648    // the default calibrated screen center for HUD display
 #define DEFAULT_CALIB_CENTER_Y       483    // the default calibrated screen center for HUD display
+#define DEFAULT_X_MAX               1296    // the default calibrated screen edge for HUD display
+#define DEFAULT_Y_MAX               966    // the default calibrated screen edge for HUD display
 #define NUM_CIRCLE_SEGMENTS   30    // the number of line segments to use for circles
 #define NUM_XPIXELS         1296    // number of X pixels of sensor
 #define NUM_YPIXELS         966     // number of Y pixels of sensor
@@ -66,7 +68,7 @@ unsigned int calib_center_x = DEFAULT_CALIB_CENTER_X;
 unsigned int calib_center_y = DEFAULT_CALIB_CENTER_Y;
 
 bool isSavingImages = SAVE_IMAGES;
-bool flightMode = FLIGHT_MODE;
+unsigned int mode = MODE;
 unsigned int max_save_threads = MAX_SAVE_THREADS;
 unsigned int save_threads_count = 0;
 unsigned int mod_save = MOD_SAVE;
@@ -75,8 +77,9 @@ FILE* file_ptr = NULL; // Pointer for general files.
 static FILE* print_file_ptr = NULL; // Pointer to where print statements should be sent.
 
 char message[100] = "Starting Up";
-char centerCoords[100]; // string to save the coordinates of the center
-char exposureTimeStr[100];
+char centerCoords[10]; // string to save the coordinates of the center
+char exposureTimeStr[10]; // string for exposure time
+char modeStr[25]; // string type of mode
 int cameraID = 0;
 
 // to store the image
@@ -134,6 +137,7 @@ void gl_switchToOrtho (void);
 
 void keyboard (unsigned char key, int x, int y);
 void moveCenter (int key, int x, int y);
+void autoExposure ();
 void *CameraThread( void * threadargs, int camera_id);
 void *ImageSaveThread(void *threadargs);
 void read_calibrated_ccd_center(void);
@@ -719,10 +723,25 @@ void gl_display (void) {
 	glColor4f(1, 1, 1, 1);
     // draw the message string
 	gl_draw_string(100, 100, message);
-    if (!flightMode){
+    if (mode != 0){ // not flight mode
         gl_draw_string(100, 900, centerCoords);
-        gl_draw_string(1200, 900, exposureTimeStr);
+        gl_draw_string(1150, 900, exposureTimeStr);
     }
+
+    switch (mode)
+    {
+    case 0:
+        sprintf(modeStr, "Flight Mode");
+        break;
+    case 1:
+        sprintf(modeStr, "Alignment Mode");
+        break;
+    case 2:
+        sprintf(modeStr, "Heliostat Mode");
+        break;
+    }
+    gl_draw_string(0, 940, modeStr);
+
 
     // X - line
 	glBegin(GL_LINES);
@@ -805,7 +824,9 @@ void keyboard (unsigned char key, int x, int y) {
 
         exit(0); //quit the program
     }
-    if (!flightMode){
+    if (mode != 0){ // not flight mode
+        unsigned int minExposure = 1000;
+        unsigned int maxExposure = 10000;
         if (key=='s')
         {
             // if images are currently saving automatically disable this functionality
@@ -819,14 +840,16 @@ void keyboard (unsigned char key, int x, int y) {
                 isSavingImages = false;
             }
         }
-        if (key=='=')
+        if (key=='=' || key=='+')
         {
             settings.exposure += 1000;
+            if (settings.exposure > maxExposure){settings.exposure=maxExposure;}
             sprintf(exposureTimeStr, "%d", settings.exposure);
         }
-        if (key=='-')
+        if (key=='-' || key=='_')
         {
             settings.exposure -= 1000;
+            if (settings.exposure < minExposure){settings.exposure=minExposure;}
             sprintf(exposureTimeStr, "%d", settings.exposure);
         }
     }
@@ -836,15 +859,19 @@ void moveCenter (int key, int x, int y) {
     switch(key){
         case GLUT_KEY_UP:
             calib_center_y-=1;
+            if (calib_center_y <= 0) {calib_center_y=1;}
             break;
         case GLUT_KEY_DOWN:
             calib_center_y+=1;
+            if (calib_center_y >= DEFAULT_Y_MAX) {calib_center_y=DEFAULT_Y_MAX-1;}
             break;
         case GLUT_KEY_LEFT:
             calib_center_x-=1;
+            if (calib_center_x <= 0) {calib_center_x=1;}
             break;
         case GLUT_KEY_RIGHT:
             calib_center_x+=1;
+            if (calib_center_x >= DEFAULT_X_MAX) {calib_center_x=DEFAULT_X_MAX-1;}
             break;
     }
     sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
@@ -1005,7 +1032,7 @@ int main (int argc, char **argv) {
     glutIdleFunc (gl_display); //update any variables in display
     glutReshapeFunc (gl_reshape); //reshape the window accordingly
     glutKeyboardFunc (keyboard); //check the keyboard
-    if (!flightMode){
+    if (mode != 0){ // not flight mode
         glutSpecialFunc (moveCenter); //move center
     }
     glutMainLoop (); //call the main loop
