@@ -3,7 +3,7 @@
 #define MOD_SAVE 30
 #define TIMESTAMP_LENGTH       19
 #define PRINT_TO_FILE true // Default for whether print statements are sent to screen or file.
-#define MODE 1 // 0 - flight mode, 1 - alignment, 2 - heliostat
+#define MODE 0 // 0 - flight mode, 1 - alignment, 2 - heliostat
 #define NORTH_ANGLE 135*(M_PI / 180.0)
 
 #define MAX_THREADS            10
@@ -1019,6 +1019,15 @@ void *ImageSaveThread(void *threadargs)
 }
 
 int main (int argc, char **argv) {
+    if (argc!=2){ // FLIGHT MODE IF NO INPUT GIVEN
+        mode = 0;
+    }
+    else{
+        mode = atoi(argv[1]); // Get mode value from command line
+        if(mode>2){ // if not valid mode, set it to flight mode
+            mode = 0;
+        }
+    }
     sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
     sprintf(exposureTimeStr, "%d", settings.exposure);
     // Set where print statements should sent: screen or file.
