@@ -1,0 +1,18 @@
+[Unit]
+Description=FOXSI SAAS Startup
+After=network.target
+After=multi-user.target
+After=network.target
+Requires=graphical.target
+
+[Service]
+Environment=DISPLAY=:0
+Environment=GENICAM_ROOT_V3_3=/opt/jai/ebus_sdk/linux-aarch64-arm/lib/genicam
+WorkingDirectory=/home/dannysun/Desktop/SAAS
+ExecStart=/home/dannysun/Desktop/SAAS/display
+Restart=always
+RestartSec=3
+User=dannysun
+
+[Install]
+WantedBy=graphical.target
