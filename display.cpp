@@ -1,5 +1,5 @@
 #define SAVE_IMAGES true // true to continuously save images
-#define SAVE_LOCATION1 "./images/" //Save locations for FITS files
+#define SAVE_LOCATION "images/" //Save locations for FITS files
 #define MOD_SAVE 30
 #define TIMESTAMP_LENGTH       19
 #define PRINT_TO_FILE true // Default for whether print statements are sent to screen or file.
@@ -28,6 +28,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <pthread.h>    /* for multithreading */
 #include <signal.h>     /* for signal() */
 #include <unistd.h>     /* for sleep()  */
@@ -1052,15 +1053,46 @@ int main (int argc, char **argv) {
     snprintf(exposureTimeStr, sizeof(exposureTimeStr),"%d", settings.exposure);
     // Set where print statements should sent: screen or file.
     if (PRINT_TO_FILE == false) {
-      print_file_ptr = stdout;
+        print_file_ptr = stdout;
     } else {
-      char print_filename[128];
-      char timestamp[TIMESTAMP_LENGTH];
-      writeCurrentUT(timestamp);
-      snprintf(print_filename, sizeof(print_filename), "FOXSI_SAAS_print_output_%s.txt", timestamp);
-      print_filename[128 - 1] = '\0';
-      print_file_ptr = fopen(print_filename, "w");
-      fprintf(print_file_ptr, "Created print statement file, %s, at %s", print_filename, timestamp);
+        char print_filename[256];
+        char timestamp[TIMESTAMP_LENGTH];
+        writeCurrentUT(timestamp);
+
+        char save_directory[128];
+        char counter_directory[128];
+        int counter = 0;
+        
+        snprintf(counter_directory, sizeof(counter_directory), "%scounter.txt", SAVE_LOCATION);
+        FILE *counter_file = fopen(counter_directory, "r+");
+        // file doesn't exist, this makes the MAKE clean easier
+        if (counter_file == NULL) {
+            // create file
+            counter_file = fopen(counter_directory, "w");
+            if (counter_file == NULL) {
+                perror("Error opening counter.txt file");
+                exit(1);
+            }
+            fprintf(counter_file, "%d\n", counter);  // Initialize the file with 0
+        } else {
+            // File exists, read the last number
+            fscanf(counter_file, "%d", &counter);
+        }
+        snprintf(save_directory, sizeof(save_directory), "%s%d", SAVE_LOCATION, counter);
+        mkdir(save_directory,0777);
+        // Increment the counter
+        counter++;
+        // Move the file pointer back to the start of the file to overwrite the number
+        rewind(counter_file);
+        // Write the updated counter back to the file
+        fprintf(counter_file, "%d\n", counter);
+        // Close the file
+        fclose(counter_file);
+
+        snprintf(print_filename, sizeof(print_filename), "%s/FOXSI_SAAS_print_output_%s.txt", save_directory, timestamp);
+        print_filename[128 - 1] = '\0';
+        print_file_ptr = fopen(print_filename, "w");
+        fprintf(print_file_ptr, "Created print statement file, %s, at %s", print_filename, timestamp);
     }
 
     // to catch a Ctrl-C or termination signal and clean up
