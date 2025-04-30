@@ -324,7 +324,7 @@ void *CameraThread( void * threadargs)
             lResult = lSystem.Find();
             if( !lResult.IsOK() )
             {
-                sprintf(message, "PvSystem::Find Error: %s", lResult.GetCodeString().GetAscii() );
+                snprintf(message, sizeof(message),"PvSystem::Find Error: %s", lResult.GetCodeString().GetAscii());
                 fprintf(print_file_ptr, "%s\n", message);
                 cameraReady = false;
                 sleep(SLEEP_CAMERA_CONNECT);
@@ -346,7 +346,7 @@ void *CameraThread( void * threadargs)
 
                         if( lDeviceCount == 0 )
                         {
-                            sprintf(message, "No devices on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
+                            snprintf(message, sizeof(message),"No devices on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
                             lNetwork->GetName().GetAscii(),
                             lNetwork->GetMACAddress().GetAscii(),
                             lNetwork->GetIPAddress( x ).GetAscii(),
@@ -356,7 +356,7 @@ void *CameraThread( void * threadargs)
                             continue;
                         } else if( lDeviceCount > 1 )
                         {
-                            sprintf(message, "Multiple devices on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
+                            snprintf(message, sizeof(message), "Multiple devices on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
                             lNetwork->GetName().GetAscii(),
                             lNetwork->GetMACAddress().GetAscii(),
                             lNetwork->GetIPAddress( x ).GetAscii(),
@@ -366,7 +366,7 @@ void *CameraThread( void * threadargs)
                         } else if( lDeviceCount == 1 )
                         {
                             lDeviceInfo = dynamic_cast<const PvDeviceInfoGEV*>(lInterface->GetDeviceInfo(0));
-                            sprintf(message, "Device found on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
+                            snprintf(message, sizeof(message), "Device found on %s Interface\nMAC: %s\nIP: %s\nSubnet Mask: %s\n\n",
                             lNetwork->GetName().GetAscii(),
                             lNetwork->GetMACAddress().GetAscii(),
                             lNetwork->GetIPAddress( x ).GetAscii(),
@@ -379,14 +379,14 @@ void *CameraThread( void * threadargs)
 
                         if( lDeviceCount == 0 )
                         {
-                            sprintf(message, "No devices connected to %s Interface %i\n\n",
+                            snprintf(message, sizeof(message), "No devices connected to %s Interface %i\n\n",
                             lInterface->GetName().GetAscii(),
                             x );
                             fprintf(print_file_ptr, "%s\n", message);
                             continue;
                         } else if( lDeviceCount > 1 )
                         {
-                            sprintf(message, "Multiple devices connected to %s Interface %i\n\n",
+                            snprintf(message, sizeof(message), "Multiple devices connected to %s Interface %i\n\n",
                             lInterface->GetName().GetAscii(),
                             x );
                             fprintf(print_file_ptr, "%s\n", message);
@@ -394,7 +394,7 @@ void *CameraThread( void * threadargs)
                         } else if( lDeviceCount == 1 )
                         {
                             lDeviceInfo = dynamic_cast<const PvDeviceInfoGEV*>(lInterface->GetDeviceInfo(0));
-                            sprintf(message, "Device found on %s Interface %i \n\n",
+                            snprintf(message, sizeof(message), "Device found on %s Interface %i \n\n",
                             lInterface->GetName().GetAscii(),
                             x );
                             fprintf(print_file_ptr, "%s\n", message);
@@ -408,13 +408,13 @@ void *CameraThread( void * threadargs)
 
                 // If no device is selected, or multiple are found, abort
                 if( lDeviceCount != 1 ){
-                    lDeviceCount == 0 ? sprintf(message, "No Camera Connection Found.\n" ) : sprintf(message, "Multiple Cameras Found, Unsure How to Proceed.\n" );
+                    lDeviceCount == 0 ? snprintf(message, sizeof(message), "No Camera Connection Found.\n" ) : snprintf(message, sizeof(message), "Multiple Cameras Found, Unsure How to Proceed.\n" );
                     fprintf(print_file_ptr, "%s\n", message);
                     cameraReady = false;
                     sleep(SLEEP_CAMERA_CONNECT);
                 } else {
                     // Connect to the GEV Device
-                    sprintf(message, "Connecting to %s\n", lDeviceInfo->GetIPAddress().GetAscii());
+                    snprintf(message, sizeof(message), "Connecting to %s\n", lDeviceInfo->GetIPAddress().GetAscii());
                     // check if the first three digits of IP address are 192 
                     if (strncmp(lDeviceInfo->GetIPAddress().GetAscii(), "192", 3) == 0) {
                         resetIPaddress();
@@ -426,7 +426,7 @@ void *CameraThread( void * threadargs)
                         cameraReady = false;
                         sleep(SLEEP_CAMERA_CONNECT);
                     } else {
-                        sprintf(message, "Successfully connected to %s %s\n", lDeviceInfo->GetIPAddress().GetAscii(), lDeviceInfo->GetSerialNumber().GetAscii() );
+                        snprintf(message, sizeof(message), "Successfully connected to %s %s\n", lDeviceInfo->GetIPAddress().GetAscii(), lDeviceInfo->GetSerialNumber().GetAscii() );
                         fprintf(print_file_ptr, "%s\n", message);
 
                         // Get device parameters need to control streaming
@@ -436,7 +436,7 @@ void *CameraThread( void * threadargs)
                         lDevice.NegotiatePacketSize();
 
                         // Open stream - have the PvDevice do it for us
-                        sprintf(message, "Opening stream to device\n" );
+                        snprintf(message, sizeof(message), "Opening stream to device\n" );
                         fprintf(print_file_ptr, "%s\n", message);
                         lStream.Open( lDeviceInfo->GetIPAddress() );
 
@@ -456,7 +456,7 @@ void *CameraThread( void * threadargs)
 
                         // IMPORTANT: the pipeline needs to be "armed", or started before
                         // we instruct the device to send us images
-                        sprintf(message, "Starting pipeline\n" );
+                        snprintf(message, sizeof(message), "Starting pipeline\n" );
                         fprintf(print_file_ptr, "%s\n", message);
 
                         // set camera settings
@@ -499,13 +499,13 @@ void *CameraThread( void * threadargs)
                         // before sending the AcquisitionStart command
                         lDeviceParams->SetIntegerValue( "TLParamsLocked", 1 );
 
-                        sprintf(message, "Resetting timestamp counter...\n" );
+                        snprintf(message, sizeof(message), "Resetting timestamp counter...\n" );
                         fprintf(print_file_ptr, "%s\n", message);
                         lDeviceParams->ExecuteCommand( "GevTimestampControlReset" );
 
                         // The pipeline is already "armed", we just have to tell the device
                         // to start sending us images
-                        sprintf(message, "Sending StartAcquisition command to device\n" );
+                        snprintf(message, sizeof(message), "Sending StartAcquisition command to device\n" );
                         fprintf(print_file_ptr, "%s\n", message);
                         lDeviceParams->ExecuteCommand( "AcquisitionStart" );
 
@@ -555,16 +555,16 @@ void *CameraThread( void * threadargs)
                             lDevice.GetParameters()->GetIntegerValue( "GetTemperature", lTempValue );
                             if (lTempValue >= 512) lTempValue = lTempValue - 1024;
                             camera_temperature = (float)lTempValue / 4.;
-                            sprintf(message, "%s - Acquiring: %5.1f C", timestamp, camera_temperature );
+                            snprintf(message, sizeof(message), "%s - Acquiring: %5.1f C", timestamp, camera_temperature );
                         }
                         else{
-                            sprintf(message, "Saving Disabled. Seeing Live Feed.");
+                            snprintf(message, sizeof(message), "Saving Disabled. Seeing Live Feed.");
                         }
 
                         if (frameCount % mod_save == 0 && save_threads_count < max_save_threads){
                             // Increment save threads counter.
                             save_threads_count++;
-                            sprintf(thread_message, "Incrementing save_threads_count.  Was %u.  Now %u\n",
+                            snprintf(thread_message, sizeof(thread_message), "Incrementing save_threads_count.  Was %u.  Now %u\n",
                                 save_threads_count-1, save_threads_count);
                             fprintf(print_file_ptr, "%s", thread_message);
 
@@ -576,7 +576,7 @@ void *CameraThread( void * threadargs)
 
                             // Decrement save threads counter;
                             save_threads_count--;
-                            sprintf(thread_message, "Decrementing save_threads_count. Was %u.  Now %u.\n", save_threads_count+1, save_threads_count);
+                            snprintf(thread_message, sizeof(thread_message), "Decrementing save_threads_count. Was %u.  Now %u.\n", save_threads_count+1, save_threads_count);
                             fprintf(print_file_ptr, "%s", thread_message);
                         }
                         frameCount++;
@@ -584,7 +584,7 @@ void *CameraThread( void * threadargs)
                     char block_message[255];
                     char timestamp[TIMESTAMP_LENGTH];
                     writeCurrentUT(timestamp);
-                    sprintf(block_message, "\n %c BlockID: %016lX W: %i H: %i %.01f FPS %.01f Mb/s at %s\r\n",
+                    snprintf(block_message, sizeof(block_message), "\n %c BlockID: %016lX W: %i H: %i %.01f FPS %.01f Mb/s at %s\r\n",
                             lDoodle[ lDoodleIndex ],
                             lBuffer->GetBlockID(),
                             lWidth,
@@ -601,7 +601,7 @@ void *CameraThread( void * threadargs)
             else
             {
                 // Timeout
-                sprintf(message, "Unable to connect to the device: Error Code %d\n", lResult.GetInternalCode() );
+                snprintf(message, sizeof(message), "Unable to connect to the device: Error Code %d\n", lResult.GetInternalCode() );
                 fprintf(print_file_ptr, "%c Timeout\r", lDoodle[ lDoodleIndex ] );
             }
         }
@@ -737,13 +737,13 @@ void gl_display (void) {
     switch (mode)
     {
     case 0:
-        sprintf(modeStr, "Flight Mode");
+        snprintf(modeStr, sizeof(modeStr), "Flight Mode");
         break;
     case 1:
-        sprintf(modeStr, "Alignment Mode");
+        snprintf(modeStr, sizeof(modeStr), "Alignment Mode");
         break;
     case 2:
-        sprintf(modeStr, "Heliostat Mode");
+        snprintf(modeStr, sizeof(modeStr), "Heliostat Mode");
         break;
     }
     gl_draw_string(0, 940, modeStr);
@@ -847,11 +847,11 @@ void keyboard (unsigned char key, int x, int y) {
             // if images are currently saving automatically disable this functionality
             if (!isSavingImages){
                 Thread_data tdata;
-                sprintf(message, "Manual Saving Enabled.");
+                snprintf(message, sizeof(message), "Manual Saving Enabled.");
                 start_thread(ImageSaveThread, &tdata);
                 isSavingImages = true;
             } else {
-                sprintf(message, "Manual Saving Disabled.");
+                snprintf(message, sizeof(message), "Manual Saving Disabled.");
                 isSavingImages = false;
             }
         }
@@ -859,13 +859,13 @@ void keyboard (unsigned char key, int x, int y) {
         {
             settings.exposure += 1000;
             if (settings.exposure > maxExposure){settings.exposure=maxExposure;}
-            sprintf(exposureTimeStr, "%d", settings.exposure);
+            snprintf(exposureTimeStr, sizeof(exposureTimeStr), "%d", settings.exposure);
         }
         if (key=='-' || key=='_')
         {
             settings.exposure -= 1000;
             if (settings.exposure < minExposure){settings.exposure=minExposure;}
-            sprintf(exposureTimeStr, "%d", settings.exposure);
+            snprintf(exposureTimeStr, sizeof(exposureTimeStr), "%d", settings.exposure);
         }
         if (key=='p')
         {
@@ -893,7 +893,7 @@ void moveCenter (int key, int x, int y) {
             if (calib_center_x >= NUM_XPIXELS) {calib_center_x=NUM_XPIXELS-1;}
             break;
     }
-    sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
+    snprintf(centerCoords, sizeof(centerCoords), "(%d, %d)", calib_center_x, calib_center_y);
 }
 void autoExposure(){
     // MIGHT BE FASTER TO DO A QUICKSEARCH IF IM ONLY INTERESTED IN THE TOP x% OF VALUES!!!!!!!!!!!!!!!!!
@@ -998,7 +998,7 @@ void *ImageSaveThread(void *threadargs)
     clock_gettime(CLOCK_REALTIME, &localCaptureTime);
 
     writeCurrentUT(timestamp);
-    sprintf(filename, "FOXSI_SAAS_%s.fits", timestamp);
+    snprintf(filename, sizeof(filename), "FOXSI_SAAS_%s.fits", timestamp);
     filename[128 - 1] = '\0';
 
     // TODO; add unique ID for camera.
@@ -1048,8 +1048,8 @@ int main (int argc, char **argv) {
             mode = 0;
         }
     }
-    sprintf(centerCoords, "(%d, %d)", calib_center_x, calib_center_y);
-    sprintf(exposureTimeStr, "%d", settings.exposure);
+    snprintf(centerCoords, sizeof(centerCoords), "(%d, %d)", calib_center_x, calib_center_y);
+    snprintf(exposureTimeStr, sizeof(exposureTimeStr),"%d", settings.exposure);
     // Set where print statements should sent: screen or file.
     if (PRINT_TO_FILE == false) {
       print_file_ptr = stdout;
@@ -1057,7 +1057,7 @@ int main (int argc, char **argv) {
       char print_filename[128];
       char timestamp[TIMESTAMP_LENGTH];
       writeCurrentUT(timestamp);
-      sprintf(print_filename, "FOXSI_SAAS_print_output_%s.txt", timestamp);
+      snprintf(print_filename, sizeof(print_filename), "FOXSI_SAAS_print_output_%s.txt", timestamp);
       print_filename[128 - 1] = '\0';
       print_file_ptr = fopen(print_filename, "w");
       fprintf(print_file_ptr, "Created print statement file, %s, at %s", print_filename, timestamp);
