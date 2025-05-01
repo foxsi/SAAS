@@ -78,7 +78,7 @@ FILE* file_ptr = NULL; // Pointer for general files.
 static FILE* print_file_ptr = NULL; // Pointer to where print statements should be sent.
 
 char message[100] = "Starting Up";
-char centerCoords[10]; // string to save the coordinates of the center
+char centerCoords[15]; // string to save the coordinates of the center
 char exposureTimeStr[10]; // string for exposure time
 char modeStr[25]; // string type of mode
 int cameraID = 0;
@@ -731,7 +731,7 @@ void gl_display (void) {
     // draw the message string
 	gl_draw_string(100, 100, message);
     if (mode != 0){ // not flight mode
-        gl_draw_string(100, 900, centerCoords);
+        gl_draw_string(50, 900, centerCoords);
         gl_draw_string(1150, 900, exposureTimeStr);
     }
 
