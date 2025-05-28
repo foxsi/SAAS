@@ -73,6 +73,8 @@ unsigned int mode = MODE;
 unsigned int max_save_threads = MAX_SAVE_THREADS;
 unsigned int save_threads_count = 0;
 unsigned int mod_save = MOD_SAVE;
+// need to make global because both .fits and .txt file need it
+char save_directory[128];
 
 FILE* file_ptr = NULL; // Pointer for general files.
 static FILE* print_file_ptr = NULL; // Pointer to where print statements should be sent.
@@ -980,7 +982,7 @@ void read_settings(void) {
 
 void *ImageSaveThread(void *threadargs)
 {
-    char filename[128];
+    char filename[256];
     char timestamp[TIMESTAMP_LENGTH];
     timespec localCaptureTime;
     timespec preSave, postSave, elapsedSave;
@@ -999,8 +1001,8 @@ void *ImageSaveThread(void *threadargs)
     clock_gettime(CLOCK_REALTIME, &localCaptureTime);
 
     writeCurrentUT(timestamp);
-    snprintf(filename, sizeof(filename), "FOXSI_SAAS_%s.fits", timestamp);
-    filename[128 - 1] = '\0';
+    snprintf(filename, sizeof(filename), "%s/FOXSI_SAAS_%s.fits", save_directory,timestamp);
+    filename[256 - 1] = '\0';
 
     // TODO; add unique ID for camera.
     localHeader.cameraID = cameraID;  // this is the serial number of the camera
@@ -1061,7 +1063,6 @@ int main (int argc, char **argv) {
         char timestamp[TIMESTAMP_LENGTH];
         writeCurrentUT(timestamp);
 
-        char save_directory[128];
         char counter_directory[128];
         int counter = 0;
         
