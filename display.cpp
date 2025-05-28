@@ -146,7 +146,7 @@ void read_settings(void);
 void kill_all_threads();
 void writeCurrentUT(char *buffer);
 
-void resetIPaddress();
+// void resetIPaddress(); NO LONGER IN USE, KEPT HERE JUST IN CASE
 
 // utilities
 timespec TimespecDiff(timespec start, timespec end);
@@ -416,10 +416,10 @@ void *CameraThread( void * threadargs)
                 } else {
                     // Connect to the GEV Device
                     snprintf(message, sizeof(message), "Connecting to %s\n", lDeviceInfo->GetIPAddress().GetAscii());
-                    // check if the first three digits of IP address are 192 
-                    if (strncmp(lDeviceInfo->GetIPAddress().GetAscii(), "192", 3) == 0) {
-                        resetIPaddress();
-                    }
+                    // NO LONGER IN USE, KEPT HERE JUST IN CASE
+                    // if (strncmp(lDeviceInfo->GetIPAddress().GetAscii(), "192", 3) == 0) {
+                    //     resetIPaddress();
+                    // }
                     fprintf(print_file_ptr, "%s\n", message);
                     //sprintf(serial_number, lDeviceInfo->GetSerialNumber().GetAscii());
                     if ( !lDevice.Connect( lDeviceInfo ).IsOK() ){
@@ -1025,19 +1025,21 @@ void *ImageSaveThread(void *threadargs)
     pthread_exit(NULL);
 }
 
-void resetIPaddress(){
-    system("sudo nmcli connection delete \"Wired connection 1\"");
-    // if (result != 0) std::cerr << "Failed to delete connection (first)\n";
 
-    system("sudo nmcli connection add con-name \"Wired connection 1\" ifname eth0 type ethernet ipv4.method manual ipv4.addresses 192.168.8.8");
-    // if (result != 0) std::cerr << "Failed to add connection with 192.168.8.8\n";
+// NO LONGER IN USE, KEPT HERE JUST IN CASE!!!!!
+// void resetIPaddress(){
+//     system("sudo nmcli connection delete \"Wired connection 1\"");
+//     // if (result != 0) std::cerr << "Failed to delete connection (first)\n";
 
-    system("sudo nmcli connection delete \"Wired connection 1\"");
-    // if (result != 0) std::cerr << "Failed to delete connection (second)\n";
+//     system("sudo nmcli connection add con-name \"Wired connection 1\" ifname eth0 type ethernet ipv4.method manual ipv4.addresses 192.168.8.8");
+//     // if (result != 0) std::cerr << "Failed to add connection with 192.168.8.8\n";
 
-    system("sudo nmcli connection add con-name \"Wired connection 1\" ifname eth0 type ethernet ipv4.method manual ipv4.addresses 169.254.1.1/16");
-    // if (result != 0) std::cerr << "Failed to add connection with 169.254.1.1/16\n";
-}
+//     system("sudo nmcli connection delete \"Wired connection 1\"");
+//     // if (result != 0) std::cerr << "Failed to delete connection (second)\n";
+
+//     system("sudo nmcli connection add con-name \"Wired connection 1\" ifname eth0 type ethernet ipv4.method manual ipv4.addresses 169.254.1.1/16");
+//     // if (result != 0) std::cerr << "Failed to add connection with 169.254.1.1/16\n";
+// }
 
 int main (int argc, char **argv) {
     if (argc!=2){ // FLIGHT MODE IF NO INPUT GIVEN
