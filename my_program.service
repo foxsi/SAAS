@@ -16,3 +16,6 @@ User=dannysun
 
 [Install]
 WantedBy=graphical.target
+
+
+# add to /etc/systemd/system/my_program.service
